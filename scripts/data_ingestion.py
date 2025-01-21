@@ -2,8 +2,7 @@ import os
 import tarfile
 import gdown
 import yaml
-import nibabel as nib  # For 3D medical images
-import dvc.api  # For DVC integration
+import nibabel as nib
 
 
 def load_config():

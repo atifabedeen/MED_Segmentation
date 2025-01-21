@@ -1,0 +1,9 @@
+stages:
+  data_ingestion:
+    cmd: python scripts/data_ingestion.py
+    deps:
+      - scripts/data_ingestion.py
+      - config/config.yaml
+    outs:
+      - data/raw
+
