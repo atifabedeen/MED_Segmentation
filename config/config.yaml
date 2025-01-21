@@ -1,0 +1,6 @@
+paths:
+  raw_data: "data/raw"                # Directory for raw data
+  extracted_data: "data/extracted"    # Directory for extracted tar files
+parameters:
+  google_drive_link: "https://drive.google.com/uc?id=1wEB2I6S6tQBVEPxir8cA5kFB8gTQadYY"
+  tar_file_name: "Task02_Heart.tar"        # Name of the tar file after download

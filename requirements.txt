@@ -1,0 +1,15 @@
+numpy
+pandas
+scikit-learn
+matplotlib
+seaborn
+pyyaml
+jupyter
+pytest
+torch          # PyTorch
+torchvision    # PyTorch utilities for vision tasks
+torchaudio     # PyTorch utilities for audio tasks
+mlflow         # ML experiment tracking
+dvc            # Data version control
+gdown
+nibabel
