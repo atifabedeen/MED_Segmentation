@@ -1,6 +1,27 @@
 paths:
   raw_data: "data/raw"                # Directory for raw data
-  extracted_data: "data/extracted"    # Directory for extracted tar files
+  extracted_data: "data/extracted/Task02_Heart"    # Directory for extracted tar files
+
 parameters:
   google_drive_link: "https://drive.google.com/uc?id=1wEB2I6S6tQBVEPxir8cA5kFB8gTQadYY"
   tar_file_name: "Task02_Heart.tar"        # Name of the tar file after download
+
+training:
+  batch_size: 4  # Batch size for training
+  num_epochs: 10  # Number of training epochs
+  learning_rate: 0.001  # Learning rate for the optimizer
+
+preprocessing:
+  normalize: true  # Whether to normalize the images
+  augmentation:
+    flip: true  # Enable/disable flipping augmentation
+    rotation: 15  # Max rotation angle in degrees (set 0 to disable)
+
+logging:
+  level: "info"  # Logging level: debug, info, warning, error
+  log_dir: "logs"  # Directory for saving logs
+
+output:
+  model_dir: "models"  # Directory for saving trained models
+  checkpoints: true  # Whether to save model checkpoints
+

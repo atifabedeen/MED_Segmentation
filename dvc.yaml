@@ -7,3 +7,12 @@ stages:
     outs:
       - data/raw
 
+  preprocess:
+    cmd: python data_preprocessing.py
+    deps:
+      - data_preprocessing.py
+      - config/config.yaml
+      - data/extracted/Task02_Heart/dataset.json
+    outs:
+      - ./data (no-save)
+
