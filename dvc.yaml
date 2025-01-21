@@ -5,14 +5,12 @@ stages:
       - scripts/data_ingestion.py
       - config/config.yaml
     outs:
-      - data/raw
+      - data/raw:
+          persist: true
 
   preprocess:
-    cmd: python data_preprocessing.py
+    cmd: python scripts/data_preprocessing.py --config config/config.yaml --visualize
     deps:
-      - data_preprocessing.py
+      - scripts/data_preprocessing.py
       - config/config.yaml
       - data/extracted/Task02_Heart/dataset.json
-    outs:
-      - ./data (no-save)
-

@@ -5,8 +5,8 @@ stages:
     deps:
     - path: config/config.yaml
       hash: md5
-      md5: 7a5582b0ccd1131608a2d0794d10ec96
-      size: 325
+      md5: 698688664fbbb9fd479064287dd056f8
+      size: 1102
     - path: scripts/data_ingestion.py
       hash: md5
       md5: 0db75715a508536f9698488adb51eaca
@@ -17,3 +17,19 @@ stages:
       md5: e49f8db52aae2f43966f767308f021e5.dir
       size: 455721472
       nfiles: 1
+  preprocess:
+    cmd: python scripts/data_preprocessing.py --config config/config.yaml --visualize
+    deps:
+    - path: config/config.yaml
+      hash: md5
+      md5: 698688664fbbb9fd479064287dd056f8
+      size: 1102
+    - path: data/extracted/Task02_Heart/dataset.json
+      hash: md5
+      md5: 510bce37cff7829f70cec65f9ff16b10
+      size: 2059
+      isexec: true
+    - path: scripts/data_preprocessing.py
+      hash: md5
+      md5: 01543760b54e60b4d34cbbe3dad43bd5
+      size: 6923

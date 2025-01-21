@@ -16,6 +16,10 @@ preprocessing:
   augmentation:
     flip: true  # Enable/disable flipping augmentation
     rotation: 15  # Max rotation angle in degrees (set 0 to disable)
+  tile_height: 128  # Height of the cropped volume
+  tile_width: 128  # Width of the cropped volume
+  tile_depth: 64  # Depth of the cropped volume
+
 
 logging:
   level: "info"  # Logging level: debug, info, warning, error
