@@ -1,2 +1,4 @@
 /hss
-/data
+data/*
+!data/**/*.dvc
+!data/*.yaml

@@ -4,7 +4,9 @@ import os
 # Define the directory structure
 directory_structure = {
     "config": ["config.yaml"],
-    "data": [],
+    "data": {
+        "raw": []
+    },
     "scripts": [
         "data_ingestion.py",
         "data_preprocessing.py",
