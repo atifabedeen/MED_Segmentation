@@ -10,21 +10,16 @@ from utils import save_checkpoint
 import mlflow
 import yaml
 
-# Load configuration
 with open('config/config.yaml', 'r') as file:
     config = yaml.safe_load(file)
 
-# Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Load model
 model = load_model_from_config('config/config.yaml').to(device)
 
-# Define loss and optimizer
 criterion = DiceLoss(sigmoid=True)
 optimizer = optim.Adam(model.parameters(), lr=config['training']['learning_rate'])
 
-# Load datasets
 crop_dim = (
     config['preprocessing']['tile_height'],
     config['preprocessing']['tile_width'],
@@ -55,11 +50,9 @@ def train(model, train_loader, val_loader, optimizer, criterion, num_epochs):
                 data, target = data.to(device), target.to(device)
                 target = target.permute(0, 4, 1, 2, 3)
                 
-                # Forward pass
                 outputs = model(data)
                 loss = criterion(outputs, target)
 
-                # Backward pass
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
@@ -70,12 +63,10 @@ def train(model, train_loader, val_loader, optimizer, criterion, num_epochs):
             print(f"Epoch {epoch+1}/{num_epochs}, Train Loss: {avg_train_loss:.4f}")
             mlflow.log_metric('train_loss', avg_train_loss, step=epoch)
 
-            # Validation
             val_loss = validate(model, val_loader, criterion, epoch)
             print(f"Validation Loss: {val_loss:.4f}")
             mlflow.log_metric('val_loss', val_loss, step=epoch)
 
-            # Save best model
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 save_checkpoint(model, optimizer, config['paths']['checkpoint'], epoch=epoch, val_loss=val_loss)

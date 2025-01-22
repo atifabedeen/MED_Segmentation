@@ -2,6 +2,7 @@ paths:
   raw_data: "data/raw"                # Directory for raw data
   extracted_data: "data/extracted/Task02_Heart"    # Directory for extracted tar files
   checkpoint: "checkpoints/best_model.pth"
+  results: "results/"
 
 
 parameters:

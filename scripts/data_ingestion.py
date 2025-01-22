@@ -39,27 +39,22 @@ def process_3d_data(data_dir):
         for file in files:
             if file.endswith(".nii.gz"):
                 file_path = os.path.join(root, file)
-                volume = nib.load(file_path)  # Load 3D volume
+                volume = nib.load(file_path)
                 print(f"Loaded volume: {file_path}, Shape: {volume.shape}")
-                # Add further processing if required
 
 
 def ingest_data():
     """Main function to ingest data."""
     config = load_config()
 
-    # Paths from config
     raw_data_dir = config["paths"]["raw_data"]
     extracted_data_dir = config["paths"]["extracted_data"]
     tar_file_path = os.path.join(raw_data_dir, config["parameters"]["tar_file_name"])
 
-    # Step 1: Download the tar file
     download_dataset(config["parameters"]["google_drive_link"], tar_file_path)
 
-    # Step 2: Extract the tar file
     extract_tar_file(tar_file_path, extracted_data_dir)
 
-    # Step 3: Process 3D volumetric data
     process_3d_data(extracted_data_dir)
 
 

@@ -10,7 +10,6 @@ def load_model_from_config(config_path):
     Returns:
         nn.Module: Initialized model.
     """
-    # Load configuration
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file)
 
@@ -21,7 +20,7 @@ def load_model_from_config(config_path):
 
     if model_name == 'UNet3D':
         return UNet(
-            spatial_dims=3,  # Specify spatial dimensions
+            spatial_dims=3, 
             in_channels=in_channels,
             out_channels=out_channels,
             channels=features,

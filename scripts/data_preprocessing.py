@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import json
 import numpy as np
@@ -17,15 +16,14 @@ class Config:
         return self.config[item]
 
 class MRIDataset(Dataset):
-
     def __init__(self, crop_dim, config, mode='train'):
         self.data_path = config['paths']['extracted_data']
         self.crop_dim = crop_dim
         self.mode = mode  # Can be 'train', 'val', or 'test'
-        self.train_test_split = config['training']['batch_size'] / 10  # Example logic for splitting
-        self.validate_test_split = 0.5  # Fixed split for validation
-        self.number_output_classes = 2  # Assumed from dataset.json
-        self.random_seed = 42  # Set fixed for reproducibility
+        self.train_test_split = config['training']['batch_size'] / 10
+        self.validate_test_split = 0.5
+        self.number_output_classes = 2
+        self.random_seed = 42
 
         self.create_file_list(os.path.join(self.data_path, 'dataset.json'))
         self.prepare_split()
@@ -40,14 +38,54 @@ class MRIDataset(Dataset):
         except IOError as e:
             raise FileNotFoundError(f"File {dataset_json_path} does not exist. Ensure it is part of the project directory.")
 
-        self.filenames = {
-            idx: [
-                os.path.join(self.data_path, entry['image']),
-                os.path.join(self.data_path, entry['label'])
-            ]
-            for idx, entry in enumerate(experiment_data['training'])
-        }
+        self.filenames = {}
+        if self.mode == 'test':
+            for idx, image_path in enumerate(experiment_data[self.mode]):
+                self.filenames[idx] = [os.path.join(self.data_path, image_path), None]  # No labels for test
+        else:
+            for idx, entry in enumerate(experiment_data[self.mode]):
+                self.filenames[idx] = [
+                    os.path.join(self.data_path, entry['image']),
+                    os.path.join(self.data_path, entry['label'])
+                ]
         self.numFiles = len(self.filenames)
+
+
+    def read_nifti_file(self, idx, randomize=False):
+        img_file, msk_file = self.filenames[idx]
+        img = np.asarray(nib.load(img_file).dataobj)
+
+        msk = None
+        if msk_file:  # Only load mask if it exists
+            msk = np.asarray(nib.load(msk_file).dataobj)
+            if self.number_output_classes > 1:
+                msk_temp = np.zeros((*msk.shape, self.number_output_classes))
+                for channel in range(self.number_output_classes):
+                    msk_temp[msk == channel, channel] = 1.0
+                msk = msk_temp
+
+        img = self.z_normalize_img(img)
+        if msk is not None:
+            img, msk = self.crop(img, msk, randomize)
+        else:
+            img, _ = self.crop(img, img, randomize)  # Crop image only
+
+        return img, msk
+
+    def __getitem__(self, idx):
+        randomize = self.mode == 'train'
+        img, msk = self.read_nifti_file(self.indices[idx], randomize=randomize)
+
+        img = np.expand_dims(img, axis=0)  # Add channel dimension
+        img_tensor = torch.tensor(img, dtype=torch.float32)
+
+        if self.mode == 'test':
+            return img_tensor  # Only return the image
+        else:
+            msk_tensor = torch.tensor(msk, dtype=torch.float32)
+            return img_tensor, msk_tensor
+
+
 
     def prepare_split(self):
         """
@@ -85,7 +123,7 @@ class MRIDataset(Dataset):
             crop_len = self.crop_dim[idx]
             img_len = img.shape[idx]
             start = (img_len - crop_len) // 2
-            offset = int(np.floor(start * 0.2))  # Up to 20% offset
+            offset = int(np.floor(start * 0.2))
 
             if offset > 0 and is_random:
                 start += np.random.choice(range(-offset, offset))
@@ -101,57 +139,19 @@ class MRIDataset(Dataset):
         """
         if np.random.rand() > 0.5:
             ax = np.random.choice(range(len(self.crop_dim)))
-            img = np.flip(img, ax).copy()  # Add .copy() to avoid negative strides
-            msk = np.flip(msk, ax).copy()  # Add .copy() to avoid negative strides
+            img = np.flip(img, ax).copy()
+            msk = np.flip(msk, ax).copy()
 
         if np.random.rand() > 0.5:
-            rot = np.random.choice([1, 2, 3])  # 90, 180, 270 degrees
-            random_axis = (0, 1)  # Assume 3D volumes are in (H, W, D) format
-            img = np.rot90(img, rot, axes=random_axis).copy()  # Add .copy()
-            msk = np.rot90(msk, rot, axes=random_axis).copy()  # Add .copy()
+            rot = np.random.choice([1, 2, 3])
+            random_axis = (0, 1)
+            img = np.rot90(img, rot, axes=random_axis).copy() 
+            msk = np.rot90(msk, rot, axes=random_axis).copy()  
 
         return img, msk
-
-
-    def read_nifti_file(self, idx, randomize=False):
-        """
-        Load and preprocess a single NIfTI file pair (image and label).
-        """
-        img_file, msk_file = self.filenames[idx]
-
-        # Explicitly convert dataobj to numpy array
-        img = np.asarray(nib.load(img_file).dataobj)
-        msk = np.asarray(nib.load(msk_file).dataobj)
-
-        if self.number_output_classes == 1:
-            msk[msk > 0] = 1.0
-        else:
-            msk_temp = np.zeros((*msk.shape, self.number_output_classes))
-            for channel in range(self.number_output_classes):
-                msk_temp[msk == channel, channel] = 1.0
-            msk = msk_temp
-
-        img, msk = self.crop(img, msk, randomize)
-        img = self.z_normalize_img(img)
-
-        if randomize:
-            img, msk = self.augment_data(img, msk)
-
-        return img, msk
-
 
     def __len__(self):
         return len(self.indices)
-
-    def __getitem__(self, idx):
-        randomize = self.mode == 'train'
-        img, msk = self.read_nifti_file(self.indices[idx], randomize=randomize)
-
-        # Add channel dimension to img
-        img = np.expand_dims(img, axis=0)  # Shape: (1, height, width, depth)
-
-        # Convert to PyTorch tensors
-        return torch.tensor(img, dtype=torch.float32), torch.tensor(msk, dtype=torch.float32)
 
     def visualize_sample(self, idx, save_path=None):
         """
