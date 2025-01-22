@@ -17,6 +17,7 @@ directory_structure = {
     "notebooks": [],
     "tests": ["test_pipeline.py"],
     ".github/workflows": ["ci.yml"],
+    "checkpoints": [],
 }
 
 # Base files

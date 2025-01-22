@@ -101,16 +101,17 @@ class MRIDataset(Dataset):
         """
         if np.random.rand() > 0.5:
             ax = np.random.choice(range(len(self.crop_dim)))
-            img = np.flip(img, ax)
-            msk = np.flip(msk, ax)
+            img = np.flip(img, ax).copy()  # Add .copy() to avoid negative strides
+            msk = np.flip(msk, ax).copy()  # Add .copy() to avoid negative strides
 
         if np.random.rand() > 0.5:
             rot = np.random.choice([1, 2, 3])  # 90, 180, 270 degrees
             random_axis = (0, 1)  # Assume 3D volumes are in (H, W, D) format
-            img = np.rot90(img, rot, axes=random_axis)
-            msk = np.rot90(msk, rot, axes=random_axis)
+            img = np.rot90(img, rot, axes=random_axis).copy()  # Add .copy()
+            msk = np.rot90(msk, rot, axes=random_axis).copy()  # Add .copy()
 
         return img, msk
+
 
     def read_nifti_file(self, idx, randomize=False):
         """
@@ -145,6 +146,11 @@ class MRIDataset(Dataset):
     def __getitem__(self, idx):
         randomize = self.mode == 'train'
         img, msk = self.read_nifti_file(self.indices[idx], randomize=randomize)
+
+        # Add channel dimension to img
+        img = np.expand_dims(img, axis=0)  # Shape: (1, height, width, depth)
+
+        # Convert to PyTorch tensors
         return torch.tensor(img, dtype=torch.float32), torch.tensor(msk, dtype=torch.float32)
 
     def visualize_sample(self, idx, save_path=None):
@@ -152,7 +158,6 @@ class MRIDataset(Dataset):
         Visualize a single sample (image and mask).
         """
         img, msk = self.read_nifti_file(self.indices[idx], randomize=True)
-        
         fig, axes = plt.subplots(1, 2, figsize=(10, 5))
         axes[0].imshow(img[:, :, img.shape[2] // 2], cmap='gray')
         axes[0].set_title("Image (Augmented)")

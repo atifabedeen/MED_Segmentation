@@ -13,3 +13,4 @@ mlflow         # ML experiment tracking
 dvc            # Data version control
 gdown
 nibabel
+monai

@@ -9,8 +9,21 @@ stages:
           persist: true
 
   preprocess:
-    cmd: python scripts/data_preprocessing.py --config config/config.yaml --visualize
+    cmd: python scripts/data_preprocessing.py --config config/config.yaml
     deps:
       - scripts/data_preprocessing.py
       - config/config.yaml
       - data/extracted/Task02_Heart/dataset.json
+
+
+  train:
+    cmd: python scripts/model_training.py
+    deps:
+      - scripts/model_training.py
+      - scripts/data_preprocessing.py
+      - scripts/model_loader.py
+      - config/config.yaml
+    outs:
+      - checkpoints/best_model.pth
+    metrics:
+      - mlruns
