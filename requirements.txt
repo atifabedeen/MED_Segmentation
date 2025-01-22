@@ -6,11 +6,11 @@ seaborn
 pyyaml
 jupyter
 pytest
-torch          # PyTorch
-torchvision    # PyTorch utilities for vision tasks
-torchaudio     # PyTorch utilities for audio tasks
-mlflow         # ML experiment tracking
-dvc            # Data version control
+torch
+torchvision    
+torchaudio     
+mlflow         
+dvc            
 gdown
 nibabel
 monai

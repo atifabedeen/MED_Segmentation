@@ -10,26 +10,26 @@ parameters:
   tar_file_name: "Task02_Heart.tar"        # Name of the tar file after download
 
 training:
-  batch_size: 2  # Reduced batch size for 3D MRI volumes
-  num_epochs: 10  # Increased epochs for sufficient training
-  learning_rate: 0.0001  # Reduced learning rate for stable 3D data training
+  batch_size: 2
+  num_epochs: 5  
+  learning_rate: 0.0001 
 
 preprocessing:
-  normalize: true  # Whether to normalize the images
+  normalize: true  
   augmentation:
-    flip: true  # Enable/disable flipping augmentation
+    flip: true  
     rotation: 15  # Max rotation angle in degrees (set 0 to disable)
   tile_height: 128  # Height of the cropped volume
   tile_width: 128  # Width of the cropped volume
   tile_depth: 64  # Depth of the cropped volume
 
 logging:
-  level: "info"  # Logging level: debug, info, warning, error
-  log_dir: "logs"  # Directory for saving logs
+  level: "info"  
+  log_dir: "logs" 
 
 output:
-  model_dir: "models"  # Directory for saving trained models
-  checkpoints: true  # Whether to save model checkpoints
+  model_dir: "models"  
+  checkpoints: true 
 
 mlflow:
   experiment_name: Heart Segmentation
@@ -39,5 +39,5 @@ model:
   module: monai.networks.nets.UNet
   in_channels: 1
   out_channels: 2
-  features: [16, 32, 64, 128, 256]  # Adjusted for 3D MRI segmentation
-  strides: [2, 2, 2, 2]  # Progressive strides for down-sampling
+  features: [16, 32, 64, 128, 256] 
+  strides: [2, 2, 2, 2]

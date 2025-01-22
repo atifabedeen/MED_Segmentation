@@ -19,9 +19,9 @@ class MRIDataset(Dataset):
     def __init__(self, crop_dim, config, mode='train'):
         self.data_path = config['paths']['extracted_data']
         self.crop_dim = crop_dim
-        self.mode = mode  # Can be 'train', 'val', or 'test'
+        self.mode = mode 
         self.train_test_split = config['training']['batch_size'] / 10
-        self.validate_test_split = 0.5
+        self.validate_test_split = 0.2
         self.number_output_classes = 2
         self.random_seed = 42
 
@@ -39,16 +39,19 @@ class MRIDataset(Dataset):
             raise FileNotFoundError(f"File {dataset_json_path} does not exist. Ensure it is part of the project directory.")
 
         self.filenames = {}
-        if self.mode == 'test':
-            for idx, image_path in enumerate(experiment_data[self.mode]):
-                self.filenames[idx] = [os.path.join(self.data_path, image_path), None]  # No labels for test
-        else:
-            for idx, entry in enumerate(experiment_data[self.mode]):
+        if self.mode in ['train', 'val']:
+            for idx, entry in enumerate(experiment_data['training']):
                 self.filenames[idx] = [
                     os.path.join(self.data_path, entry['image']),
                     os.path.join(self.data_path, entry['label'])
                 ]
+        elif self.mode == 'test':
+            for idx, image_path in enumerate(experiment_data['test']):
+                self.filenames[idx] = [os.path.join(self.data_path, image_path), None]  # No labels for test
+        else:
+            raise ValueError(f"Unsupported mode: {self.mode}. Use 'train', 'val', or 'test'.")
         self.numFiles = len(self.filenames)
+
 
 
     def read_nifti_file(self, idx, randomize=False):
@@ -68,7 +71,7 @@ class MRIDataset(Dataset):
         if msk is not None:
             img, msk = self.crop(img, msk, randomize)
         else:
-            img, _ = self.crop(img, img, randomize)  # Crop image only
+            img, _ = self.crop(img, img, randomize)
 
         return img, msk
 
@@ -76,11 +79,11 @@ class MRIDataset(Dataset):
         randomize = self.mode == 'train'
         img, msk = self.read_nifti_file(self.indices[idx], randomize=randomize)
 
-        img = np.expand_dims(img, axis=0)  # Add channel dimension
+        img = np.expand_dims(img, axis=0) 
         img_tensor = torch.tensor(img, dtype=torch.float32)
 
         if self.mode == 'test':
-            return img_tensor  # Only return the image
+            return img_tensor 
         else:
             msk_tensor = torch.tensor(msk, dtype=torch.float32)
             return img_tensor, msk_tensor
@@ -95,15 +98,14 @@ class MRIDataset(Dataset):
         np.random.seed(self.random_seed)
         np.random.shuffle(indices)
 
-        num_train = int(self.numFiles * self.train_test_split)
-        num_val = int((self.numFiles - num_train) * self.validate_test_split)
-
+        num_train = int(self.numFiles * (1 - self.validate_test_split))
         if self.mode == 'train':
             self.indices = indices[:num_train]
         elif self.mode == 'val':
-            self.indices = indices[num_train:num_train + num_val]
+            self.indices = indices[num_train:]
         elif self.mode == 'test':
-            self.indices = indices[num_train + num_val:]
+            self.indices = indices
+
 
     def z_normalize_img(self, img):
         """

@@ -5,12 +5,12 @@ stages:
     deps:
     - path: config/config.yaml
       hash: md5
-      md5: c76c3530f3ed66482843780b7fe7f350
-      size: 1468
+      md5: 65e9afe8791a2264dbd29afe35108ce3
+      size: 1062
     - path: scripts/data_ingestion.py
       hash: md5
-      md5: 0db75715a508536f9698488adb51eaca
-      size: 2279
+      md5: c5c619c67382e8e7406d7bc9cd7037bb
+      size: 2072
     outs:
     - path: data/raw
       hash: md5
@@ -22,8 +22,8 @@ stages:
     deps:
     - path: config/config.yaml
       hash: md5
-      md5: c76c3530f3ed66482843780b7fe7f350
-      size: 1468
+      md5: 65e9afe8791a2264dbd29afe35108ce3
+      size: 1062
     - path: data/extracted/Task02_Heart/dataset.json
       hash: md5
       md5: 510bce37cff7829f70cec65f9ff16b10
@@ -31,34 +31,61 @@ stages:
       isexec: true
     - path: scripts/data_preprocessing.py
       hash: md5
-      md5: 7c4fe8ee934f33438e589e17504e1c67
-      size: 7211
+      md5: 245455f25eb53770fe3c4cb5b7f5aad3
+      size: 7074
   train:
     cmd: python scripts/model_training.py
     deps:
     - path: config/config.yaml
       hash: md5
-      md5: c76c3530f3ed66482843780b7fe7f350
-      size: 1468
+      md5: 65e9afe8791a2264dbd29afe35108ce3
+      size: 1062
     - path: scripts/data_preprocessing.py
       hash: md5
-      md5: 7c4fe8ee934f33438e589e17504e1c67
-      size: 7211
+      md5: 245455f25eb53770fe3c4cb5b7f5aad3
+      size: 7074
     - path: scripts/model_loader.py
       hash: md5
-      md5: 11e65a685fa6959b2eff1d8cf6db3e51
-      size: 1005
+      md5: 0dd192946e8fb87ea9cdc9819d0a9809
+      size: 2286
     - path: scripts/model_training.py
       hash: md5
-      md5: ad802738d8a782aa1c20e44934b03b92
-      size: 3672
+      md5: a26767d3bacd10912c63d9dbe878dc8b
+      size: 3463
     outs:
     - path: checkpoints/best_model.pth
       hash: md5
-      md5: b42e3e4a485ef6c7a824f90c045ae565
+      md5: 2ca48c978654daa0208be62f1df0ec11
       size: 57859125
     - path: mlruns
       hash: md5
-      md5: 02bc7ce04984376243be57db0eddc8da.dir
-      size: 57860879
+      md5: a7bb365b485411d3e333c954e5fa3e3d.dir
+      size: 57860539
       nfiles: 15
+  evaluate:
+    cmd: python scripts/model_evaluation.py
+    deps:
+    - path: checkpoints/best_model.pth
+      hash: md5
+      md5: 2ca48c978654daa0208be62f1df0ec11
+      size: 57859125
+    - path: config/config.yaml
+      hash: md5
+      md5: 65e9afe8791a2264dbd29afe35108ce3
+      size: 1062
+    - path: scripts/data_preprocessing.py
+      hash: md5
+      md5: 245455f25eb53770fe3c4cb5b7f5aad3
+      size: 7074
+    - path: scripts/model_evaluation.py
+      hash: md5
+      md5: 75f9e42459d970f0d47a10352ab06cea
+      size: 2269
+    - path: scripts/model_loader.py
+      hash: md5
+      md5: 0dd192946e8fb87ea9cdc9819d0a9809
+      size: 2286
+    - path: scripts/utils.py
+      hash: md5
+      md5: 2f6eeaccc90d84fbad0fbf49686cf69d
+      size: 1894

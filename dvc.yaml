@@ -15,7 +15,6 @@ stages:
       - config/config.yaml
       - data/extracted/Task02_Heart/dataset.json
 
-
   train:
     cmd: python scripts/model_training.py
     deps:
@@ -27,3 +26,13 @@ stages:
       - checkpoints/best_model.pth
     metrics:
       - mlruns
+
+  evaluate:
+    cmd: python scripts/model_evaluation.py
+    deps:
+      - scripts/model_evaluation.py
+      - scripts/data_preprocessing.py
+      - scripts/model_loader.py
+      - scripts/utils.py
+      - config/config.yaml
+      - checkpoints/best_model.pth
