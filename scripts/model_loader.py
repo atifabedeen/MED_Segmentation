@@ -1,4 +1,4 @@
-from monai.networks.nets import UNet, UNETR, DynUNet
+from monai.networks.nets import UNet, UNETR, VNet
 import yaml
 
 def load_model_from_config(config_path):
@@ -39,20 +39,16 @@ def load_model_from_config(config_path):
             hidden_size=config['model'].get('hidden_size', 768),
             mlp_dim=config['model'].get('mlp_dim', 3072),
             num_heads=config['model'].get('num_heads', 12),
-            pos_embed=config['model'].get('pos_embed', 'perceptron'),
             norm_name=config['model'].get('norm_name', 'instance'),
             dropout_rate=config['model'].get('dropout_rate', 0.0),
         )
-    elif model_name == 'DynUNet':
-        return DynUNet(
+    elif model_name == 'VNet':
+        return VNet(
             spatial_dims=3,
             in_channels=in_channels,
             out_channels=out_channels,
-            kernel_size=config['model'].get('kernel_size', [[3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3]]),
-            strides=strides or [[2, 2, 2], [2, 2, 2], [2, 2, 2]],
-            upsample_kernel_size=config['model'].get('upsample_kernel_size', [[2, 2, 2], [2, 2, 2], [2, 2, 2]]),
-            filters=features,
-            norm_name=config['model'].get('norm_name', 'instance'),
+            dropout_prob_up=config['model'].get('dropout_rate_up', [0.1,0.1]),
+            dropout_prob_down=config['model'].get('dropout_rate_down', 0.1)
         )
     else:
         raise ValueError(f"Model '{model_name}' is not supported by this loader.")
