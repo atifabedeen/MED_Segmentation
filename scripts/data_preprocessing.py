@@ -52,8 +52,6 @@ class MRIDataset(Dataset):
             raise ValueError(f"Unsupported mode: {self.mode}. Use 'train', 'val', or 'test'.")
         self.numFiles = len(self.filenames)
 
-
-
     def read_nifti_file(self, idx, randomize=False):
         img_file, msk_file = self.filenames[idx]
         img = np.asarray(nib.load(img_file).dataobj)
@@ -114,26 +112,43 @@ class MRIDataset(Dataset):
         img = (img - np.mean(img)) / np.std(img)
         return img
 
+
     def crop(self, img, msk, randomize):
         """
-        Crop the image and mask to specified dimensions, with optional randomization.
+        Crop or pad the image and mask to specified dimensions, with optional randomization.
+
+        Args:
+            img (numpy.ndarray): Input image volume.
+            msk (numpy.ndarray): Input mask volume.
+            randomize (bool): Whether to randomize cropping position.
+
+        Returns:
+            tuple: Cropped or padded image and mask.
         """
-        slices = []
-        is_random = randomize and np.random.rand() > 0.5
+        def crop_or_pad_dimension(data, target_size, axis):
+            size = data.shape[axis]
+            if size > target_size: 
+                start = (size - target_size) // 2
+                if randomize and np.random.rand() > 0.5:
+                    offset = int(np.floor(start * 0.2))
+                    start += np.random.choice(range(-offset, offset + 1))
+                    start = max(0, min(start, size - target_size))
+                return np.take(data, range(start, start + target_size), axis=axis)
+            elif size < target_size: 
+                pad_size = (target_size - size) // 2
+                pad_width = [(0, 0)] * data.ndim
+                pad_width[axis] = (pad_size, target_size - size - pad_size)
+                return np.pad(data, pad_width, mode='constant', constant_values=0)
+            else:
+                return data
 
-        for idx in range(len(self.crop_dim)):
-            crop_len = self.crop_dim[idx]
-            img_len = img.shape[idx]
-            start = (img_len - crop_len) // 2
-            offset = int(np.floor(start * 0.2))
+        for axis in range(len(self.crop_dim)):
+            img = crop_or_pad_dimension(img, self.crop_dim[axis], axis)
+            if msk is not None:
+                msk = crop_or_pad_dimension(msk, self.crop_dim[axis], axis)
 
-            if offset > 0 and is_random:
-                start += np.random.choice(range(-offset, offset))
-                start = max(0, min(start, img_len - crop_len))
+        return img, msk
 
-            slices.append(slice(start, start + crop_len))
-
-        return img[tuple(slices)], msk[tuple(slices)]
 
     def augment_data(self, img, msk):
         """

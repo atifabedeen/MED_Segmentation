@@ -1,8 +1,9 @@
-# Placeholder
 #Move dataset.json from task02_heart to extracted
 
 import torch
 import os
+import shutil
+
 
 def save_checkpoint(model, optimizer, filepath, epoch=None, val_loss=None):
     """Saves model and optimizer state to a checkpoint file.
@@ -50,3 +51,55 @@ def load_checkpoint(filepath, model, optimizer=None):
     print(f"Checkpoint loaded from {filepath}")
 
     return {k: v for k, v in checkpoint.items() if k not in ['model_state_dict', 'optimizer_state_dict']}
+
+import os
+
+def remove_hidden_files(directory):
+    """
+    Remove files that start with an underscore or dot from the specified directory.
+
+    Args:
+        directory (str): Path to the directory where hidden files need to be removed.
+
+    Returns:
+        int: Number of files removed.
+    """
+    removed_count = 0
+    try:
+        for filename in os.listdir(directory):
+            if filename.startswith('_') or filename.startswith('.'): 
+                filepath = os.path.join(directory, filename)
+                if os.path.isfile(filepath):
+                    os.remove(filepath)
+                    removed_count += 1
+        return removed_count
+    except Exception as e:
+        print(f"Error while removing hidden files: {e}")
+        return 0
+
+
+def flatten_directory(root_dir):
+    """
+    Safely flatten a nested directory structure by moving specific nested contents
+    to the specified root directory. Ensures that the function does not repeatedly
+    flatten directories that are already organized.
+
+    Args:
+        root_dir (str): The root directory where all contents will be moved.
+    """
+    for folder_name in os.listdir(root_dir):
+        folder_path = os.path.join(root_dir, folder_name)
+
+        if os.path.isdir(folder_path) and folder_name.startswith("Task"):
+            for sub_item in os.listdir(folder_path):
+                sub_item_path = os.path.join(folder_path, sub_item)
+                dest_path = os.path.join(root_dir, sub_item)
+
+                if os.path.exists(dest_path):
+                    base, ext = os.path.splitext(sub_item)
+                    dest_path = os.path.join(root_dir, f"{base}_conflict{ext}")
+
+                shutil.move(sub_item_path, dest_path)
+
+            os.rmdir(folder_path)
+

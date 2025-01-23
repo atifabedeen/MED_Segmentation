@@ -3,6 +3,8 @@ import tarfile
 import gdown
 import yaml
 import nibabel as nib
+from utils import remove_hidden_files, flatten_directory
+
 
 
 def load_config():
@@ -54,6 +56,15 @@ def ingest_data():
     download_dataset(config["parameters"]["google_drive_link"], tar_file_path)
 
     extract_tar_file(tar_file_path, extracted_data_dir)
+
+    flatten_directory(extracted_data_dir)
+    
+    directories = ["imagesTs", "imagesTr", "labelsTr"]
+
+    for directory in directories:
+        directory = os.path.join(extracted_data_dir, directory)
+        removed_files = remove_hidden_files(directory)
+        print(f"Removed {removed_files} hidden files from {directory}.")
 
     process_3d_data(extracted_data_dir)
 

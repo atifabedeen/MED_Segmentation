@@ -1,19 +1,19 @@
 paths:
   raw_data: "data/raw"                # Directory for raw data
   extracted_data: "data/extracted"    # Directory for extracted tar files
-  checkpoint: "checkpoints/best_model_spleen.pth"
+  checkpoint: "checkpoints/best_model_heart.pth"
   results: "results/"
 
 
 parameters:
-  google_drive_link: "https://drive.google.com/uc?id=1jzeNU1EKnK81PyTsrx0ujfNl-t0Jo8uE"
-  tar_file_name: "Task09_Spleen.tar"        
+  google_drive_link: "https://drive.google.com/uc?id=1wEB2I6S6tQBVEPxir8cA5kFB8gTQadYY"
+  tar_file_name: "Task02_Heart.tar"        
 
 training:
   learning_rate: 0.0001
   batch_size: 2
-  num_epochs: 1
-  weight_decay: 0.00001
+  num_epochs: 2
+  weight_decay: 1e-5
   scheduler_step: 10
   scheduler_gamma: 0.5
   patience: 10
@@ -24,8 +24,8 @@ preprocessing:
   augmentation:
     flip: true  
     rotation: 15  # Max rotation angle in degrees (set 0 to disable)
-  tile_height: 256  # Height of the cropped volume
-  tile_width: 256 # Width of the cropped volume
+  tile_height: 128  # Height of the cropped volume
+  tile_width: 128  # Width of the cropped volume
   tile_depth: 64  # Depth of the cropped volume
 
 logging:
@@ -37,7 +37,7 @@ output:
   checkpoints: true 
 
 mlflow:
-  experiment_name: Spleen Segmentation
+  experiment_name: Heart Segmentation
 
 model:
   name: UNet3D
