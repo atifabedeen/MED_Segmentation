@@ -1,11 +1,15 @@
 import os
 import json
 import numpy as np
-import nibabel as nib
-import torch
-from torch.utils.data import Dataset, DataLoader
-import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from monai.transforms import (
+    Compose, LoadImaged, EnsureChannelFirstd, ScaleIntensityRanged,
+    CropForegroundd, RandCropByPosNegLabeld, AsDiscreted, SpatialPadd,
+    Orientationd, Spacingd, Resize
+)
+from monai.data import DataLoader, Dataset, pad_list_data_collate
 import yaml
+
 
 class Config:
     def __init__(self, config_path):
@@ -15,204 +19,173 @@ class Config:
     def __getitem__(self, item):
         return self.config[item]
 
-class MRIDataset(Dataset):
-    def __init__(self, crop_dim, config, mode='train'):
-        self.data_path = config['paths']['extracted_data']
-        self.crop_dim = crop_dim
-        self.mode = mode 
-        self.train_test_split = config['training']['batch_size'] / 10
-        self.validate_test_split = 0.2
-        self.number_output_classes = 2
-        self.random_seed = 42
 
-        self.create_file_list(os.path.join(self.data_path, 'dataset.json'))
-        self.prepare_split()
+def load_and_split_data(config, split_file="splits.json"):
+    """
+    Load dataset.json, split data into train, val, and test, and save to a split file.
+    """
+    if os.path.exists(split_file):
+        # Load existing splits
+        with open(split_file, 'r') as f:
+            splits = json.load(f)
+            train_files = splits['train']
+            val_files = splits['val']
+            test_files = splits['test']
+    else:
+        # Perform dataset splitting
+        data_path = config['paths']['extracted_data']
+        dataset_json_path = os.path.join(data_path, 'dataset.json')
 
-    def create_file_list(self, dataset_json_path):
+        with open(dataset_json_path, 'r') as f:
+            experiment_data = json.load(f)
+
+        data_dicts = [
+            {"image": os.path.join(data_path, entry["image"]), "label": os.path.join(data_path, entry["label"])}
+            for entry in experiment_data["training"]
+        ]
+
+        test_size = config['data_split']['test_split']
+        val_size = config['data_split']['val_split'] / (1 - test_size)
+
+        train_files, test_files = train_test_split(data_dicts, test_size=test_size, random_state=42, shuffle=True)
+        train_files, val_files = train_test_split(train_files, test_size=val_size, random_state=42, shuffle=True)
+
+        # Save splits to file
+        splits = {"train": train_files, "val": val_files, "test": test_files}
+        with open(split_file, 'w') as f:
+            json.dump(splits, f)
+
+    return train_files, val_files, test_files
+
+
+def get_transforms(config, mode='train'):
+    """
+    Define preprocessing and augmentation transforms using MONAI.
+    """
+    if mode == "train":
+        transforms = [
+            LoadImaged(keys=["image", "label"]),
+            EnsureChannelFirstd(keys=["image", "label"]),
+            ScaleIntensityRanged(
+                keys=["image"],
+                a_min=-57,
+                a_max=164,
+                b_min=0.0,
+                b_max=1.0,
+                clip=True,
+            ),
+            CropForegroundd(keys=["image", "label"], source_key="image"),
+            Orientationd(keys=["image", "label"], axcodes="RAS"),
+            Spacingd(
+                keys=["image", "label"],
+                pixdim=(1.5, 1.5, 2.0),
+                mode=("bilinear", "nearest")
+            ),
+            RandCropByPosNegLabeld(
+                keys=["image", "label"],
+                label_key="label",
+                spatial_size=config['preprocessing']['crop_dim'],
+                pos=1,
+                neg=1,
+                num_samples=4,
+                image_key="image",
+                image_threshold=0,
+            ),
+        ]
+    elif mode == "val":
+        transforms = [
+            LoadImaged(keys=["image", "label"]),
+            EnsureChannelFirstd(keys=["image", "label"]),
+            ScaleIntensityRanged(
+                keys=["image"],
+                a_min=-57,
+                a_max=164,
+                b_min=0.0,
+                b_max=1.0,
+                clip=True,
+            ),
+            CropForegroundd(keys=["image", "label"], source_key="image"),
+            Orientationd(keys=["image", "label"], axcodes="RAS"),
+            Spacingd(keys=["image", "label"], pixdim=(1.5, 1.5, 2.0), mode=("bilinear", "nearest")),
+        ]
+    elif mode == "test":
+        transforms = [
+            LoadImaged(keys=["image", "label"]),
+            EnsureChannelFirstd(keys=["image", "label"]),
+            Orientationd(keys=["image"], axcodes="RAS"),
+            Spacingd(keys=["image"], pixdim=(1.5, 1.5, 2.0), mode="bilinear"),
+            ScaleIntensityRanged(
+                keys=["image"],
+                a_min=-57,
+                a_max=164,
+                b_min=0.0,
+                b_max=1.0,
+                clip=True,
+            ),
+            CropForegroundd(keys=["image"], source_key="image"),
+        ]
+
+    return Compose(transforms)
+
+
+class DatasetManager:
+    """
+    Manage dataset splitting and DataLoader creation for train, val, and test modes.
+    """
+    def __init__(self, config, split_file="splits.json"):
+        # Load splits from file or create them
+        self.train_files, self.val_files, self.test_files = load_and_split_data(config, split_file=split_file)
+        self.config = config
+
+    def get_dataloader(self, mode):
         """
-        Load file paths and dataset metadata from dataset.json.
+        Return DataLoader for the specified mode ('train', 'val', or 'test').
         """
-        try:
-            with open(dataset_json_path, "r") as fp:
-                experiment_data = json.load(fp)
-        except IOError as e:
-            raise FileNotFoundError(f"File {dataset_json_path} does not exist. Ensure it is part of the project directory.")
-
-        self.filenames = {}
-        if self.mode in ['train', 'val']:
-            for idx, entry in enumerate(experiment_data['training']):
-                self.filenames[idx] = [
-                    os.path.join(self.data_path, entry['image']),
-                    os.path.join(self.data_path, entry['label'])
-                ]
-        elif self.mode == 'test':
-            for idx, image_path in enumerate(experiment_data['test']):
-                self.filenames[idx] = [os.path.join(self.data_path, image_path), None]  # No labels for test
+        self.transforms = None
+        if mode == 'train':
+            data_files = self.train_files
+            self.transforms = get_transforms(self.config, mode='train')
+            shuffle = True
+        elif mode == 'val':
+            data_files = self.val_files
+            self.transforms = get_transforms(self.config, mode='val')
+            shuffle = False
+        elif mode == 'test':
+            data_files = self.test_files
+            self.transforms = get_transforms(self.config, mode='test')
+            shuffle = False
         else:
-            raise ValueError(f"Unsupported mode: {self.mode}. Use 'train', 'val', or 'test'.")
-        self.numFiles = len(self.filenames)
+            raise ValueError(f"Invalid mode: {mode}. Choose from 'train', 'val', or 'test'.")
 
-    def read_nifti_file(self, idx, randomize=False):
-        img_file, msk_file = self.filenames[idx]
-        img = np.asarray(nib.load(img_file).dataobj)
+        # Create CacheDataset and DataLoader
+        dataset = Dataset(data=data_files, transform=self.transforms)
+        dataloader = DataLoader(
+            dataset,
+            batch_size=self.config['training']['batch_size'] if mode=="train" else self.config['validation']['batch_size'],
+            shuffle=shuffle,
+            num_workers=1,
 
-        msk = None
-        if msk_file:  # Only load mask if it exists
-            msk = np.asarray(nib.load(msk_file).dataobj)
-            if self.number_output_classes > 1:
-                msk_temp = np.zeros((*msk.shape, self.number_output_classes))
-                for channel in range(self.number_output_classes):
-                    msk_temp[msk == channel, channel] = 1.0
-                msk = msk_temp
+        )
 
-        img = self.z_normalize_img(img)
-        if msk is not None:
-            img, msk = self.crop(img, msk, randomize)
-        else:
-            img, _ = self.crop(img, img, randomize)
+        return dataloader
 
-        return img, msk
-
-    def __getitem__(self, idx):
-        randomize = self.mode == 'train'
-        img, msk = self.read_nifti_file(self.indices[idx], randomize=randomize)
-
-        img = np.expand_dims(img, axis=0) 
-        img_tensor = torch.tensor(img, dtype=torch.float32)
-
-        if self.mode == 'test':
-            return img_tensor 
-        else:
-            msk_tensor = torch.tensor(msk, dtype=torch.float32)
-            return img_tensor, msk_tensor
-
-
-
-    def prepare_split(self):
-        """
-        Split data into training, validation, and testing subsets.
-        """
-        indices = list(self.filenames.keys())
-        np.random.seed(self.random_seed)
-        np.random.shuffle(indices)
-
-        num_train = int(self.numFiles * (1 - self.validate_test_split))
-        if self.mode == 'train':
-            self.indices = indices[:num_train]
-        elif self.mode == 'val':
-            self.indices = indices[num_train:]
-        elif self.mode == 'test':
-            self.indices = indices
-
-
-    def z_normalize_img(self, img):
-        """
-        Normalize the image to have zero mean and unit variance.
-        """
-        img = (img - np.mean(img)) / np.std(img)
-        return img
-
-
-    def crop(self, img, msk, randomize):
-        """
-        Crop or pad the image and mask to specified dimensions, with optional randomization.
-
-        Args:
-            img (numpy.ndarray): Input image volume.
-            msk (numpy.ndarray): Input mask volume.
-            randomize (bool): Whether to randomize cropping position.
-
-        Returns:
-            tuple: Cropped or padded image and mask.
-        """
-        def crop_or_pad_dimension(data, target_size, axis):
-            size = data.shape[axis]
-            if size > target_size: 
-                start = (size - target_size) // 2
-                if randomize and np.random.rand() > 0.5:
-                    offset = int(np.floor(start * 0.2))
-                    start += np.random.choice(range(-offset, offset + 1))
-                    start = max(0, min(start, size - target_size))
-                return np.take(data, range(start, start + target_size), axis=axis)
-            elif size < target_size: 
-                pad_size = (target_size - size) // 2
-                pad_width = [(0, 0)] * data.ndim
-                pad_width[axis] = (pad_size, target_size - size - pad_size)
-                return np.pad(data, pad_width, mode='constant', constant_values=0)
-            else:
-                return data
-
-        for axis in range(len(self.crop_dim)):
-            img = crop_or_pad_dimension(img, self.crop_dim[axis], axis)
-            if msk is not None:
-                msk = crop_or_pad_dimension(msk, self.crop_dim[axis], axis)
-
-        return img, msk
-
-
-    def augment_data(self, img, msk):
-        """
-        Apply random flips and rotations to augment data.
-        """
-        if np.random.rand() > 0.5:
-            ax = np.random.choice(range(len(self.crop_dim)))
-            img = np.flip(img, ax).copy()
-            msk = np.flip(msk, ax).copy()
-
-        if np.random.rand() > 0.5:
-            rot = np.random.choice([1, 2, 3])
-            random_axis = (0, 1)
-            img = np.rot90(img, rot, axes=random_axis).copy() 
-            msk = np.rot90(msk, rot, axes=random_axis).copy()  
-
-        return img, msk
-
-    def __len__(self):
-        return len(self.indices)
-
-    def visualize_sample(self, idx, save_path=None):
-        """
-        Visualize a single sample (image and mask).
-        """
-        img, msk = self.read_nifti_file(self.indices[idx], randomize=True)
-        fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-        axes[0].imshow(img[:, :, img.shape[2] // 2], cmap='gray')
-        axes[0].set_title("Image (Augmented)")
-        
-        if len(msk.shape) == 4:  # If mask is one-hot encoded
-            msk = np.argmax(msk, axis=-1)  # Display the most probable class
-
-        axes[1].imshow(msk[:, :, msk.shape[2] // 2], cmap='jet')
-        axes[1].set_title("Mask (Augmented)")
-        
-        if save_path:
-            plt.savefig(save_path)
-        plt.show()
 
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="3D MRI Dataset Preprocessing")
+    parser = argparse.ArgumentParser(description="3D MRI Dataset Preprocessing with MONAI")
     parser.add_argument('--config', type=str, required=True, help="Path to config.yaml")
-    parser.add_argument('--visualize', action='store_true', help="Save visualization samples")
-
     args = parser.parse_args()
 
-    config = Config(args.config)  # Load configuration
+    config = Config(args.config)
+    dataset_manager = DatasetManager(config)
 
-    crop_dim = (
-        config['preprocessing']['tile_height'],
-        config['preprocessing']['tile_width'],
-        config['preprocessing']['tile_depth']
-    )
-
-    for mode in ['train', 'val', 'test']:
-        dataset = MRIDataset(crop_dim, config, mode=mode)
-
-        if args.visualize and mode == 'train':
-            save_dir = os.path.join(config['paths']['extracted_data'], 'visualizations')
-            os.makedirs(save_dir, exist_ok=True)
-            for i in range(5):
-                dataset.visualize_sample(i, save_path=os.path.join(save_dir, f'sample_{i}.png'))
-
-        print(f"{mode.capitalize()} dataset ready with {len(dataset)} samples.")
+    # Get DataLoaders for train, val, and test
+    train_loader = dataset_manager.get_dataloader('train')
+    val_loader = dataset_manager.get_dataloader('val')
+    test_loader = dataset_manager.get_dataloader('test')
+    for data in val_loader:
+        print(f"image shape: {data['image'].shape}, label shape: {data['label'].shape}")
+    print(f"Training dataset size: {len(train_loader.dataset)}")
+    print(f"Validation dataset size: {len(val_loader.dataset)}")
+    print(f"Test dataset size: {len(test_loader.dataset)}")

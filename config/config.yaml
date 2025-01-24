@@ -1,40 +1,55 @@
 paths:
-  raw_data: "data/raw"                # Directory for raw data
-  extracted_data: "data/extracted"    # Directory for extracted tar files
+  raw_data: "data/raw"
+  extracted_data: "data/extracted"
   checkpoint: "checkpoints/best_model_spleen.pth"
   results: "results/"
 
+data_split:
+  test_split: 0.1
+  val_split: 0.2
 
 parameters:
   google_drive_link: "https://drive.google.com/uc?id=1jzeNU1EKnK81PyTsrx0ujfNl-t0Jo8uE"
-  tar_file_name: "Task09_Spleen.tar"        
+  tar_file_name: "Task09_Spleen.tar"
 
 training:
   learning_rate: 0.0001
   batch_size: 2
   num_epochs: 1
-  weight_decay: 0.00001
+  weight_decay: 0.0001
   scheduler_step: 10
   scheduler_gamma: 0.5
   patience: 10
 
+validation:
+  enable_validation: true
+  val_interval: 2
+  roi_size: [160, 160, 160]
+  sw_batch_size: 4
+  batch_size: 1
 
 preprocessing:
-  normalize: true  
+  normalize: true
   augmentation:
-    flip: true  
-    rotation: 15  # Max rotation angle in degrees (set 0 to disable)
-  tile_height: 256  # Height of the cropped volume
-  tile_width: 256 # Width of the cropped volume
-  tile_depth: 64  # Depth of the cropped volume
+    flip: true
+    flip_axes: [0, 1]
+    rotation: 15
+    scale_range: [0.9, 1.1]
+    gaussian_noise: 0.01
+  crop_dim: [96, 96, 96]
 
 logging:
-  level: "info"  
-  log_dir: "logs" 
+  level: "info"
+  log_dir: "logs"
+  log_to_file: true
+  max_log_files: 5
 
 output:
-  model_dir: "models"  
-  checkpoints: true 
+  model_dir: "models"
+  checkpoints: true
+  save_every_epoch: false
+  save_best_only: true
+  checkpoint_format: "pth"
 
 mlflow:
   experiment_name: Spleen Segmentation
@@ -44,10 +59,26 @@ model:
   module: monai.networks.nets
   in_channels: 1
   out_channels: 2
-  features: [16, 32, 64, 128, 256] 
+  features: [16, 32, 64, 128, 256]
   strides: [2, 2, 2, 2]
-  dropout_rate_up: [0.1,0.1]
+  dropout_rate_up: [0.1, 0.1]
   dropout_rate_down: 0.1
 
+dataset:
+  cache_rate: 0.8
+  num_workers: 4
+  shuffle_seed: 42
 
+metrics:
+  include_background: false
+  hausdorff_percentile: 95
+  dice_reduction: "mean"
 
+inference:
+  save_predictions: true
+  save_format: "nifti"
+  inference_batch_size: 1
+
+environment:
+  seed: 42
+  device: "cuda"

@@ -3,3 +3,6 @@ data/*
 !data/**/*.dvc
 !data/*.yaml
 /mlruns
+/results
+/notebooks
+/checkpoints

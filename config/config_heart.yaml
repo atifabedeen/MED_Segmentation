@@ -4,6 +4,9 @@ paths:
   checkpoint: "checkpoints/best_model_heart.pth"
   results: "results/"
 
+data_split:
+  test_split: 0.1 
+  val_split: 0.2
 
 parameters:
   google_drive_link: "https://drive.google.com/uc?id=1wEB2I6S6tQBVEPxir8cA5kFB8gTQadYY"
@@ -13,7 +16,7 @@ training:
   learning_rate: 0.0001
   batch_size: 2
   num_epochs: 2
-  weight_decay: 1e-5
+  weight_decay: 0.00001
   scheduler_step: 10
   scheduler_gamma: 0.5
   patience: 10
@@ -24,9 +27,8 @@ preprocessing:
   augmentation:
     flip: true  
     rotation: 15  # Max rotation angle in degrees (set 0 to disable)
-  tile_height: 128  # Height of the cropped volume
-  tile_width: 128  # Width of the cropped volume
-  tile_depth: 64  # Depth of the cropped volume
+  crop_dim: [128, 128, 64]  # Depth, Height, Width
+
 
 logging:
   level: "info"  

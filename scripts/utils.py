@@ -3,6 +3,9 @@
 import torch
 import os
 import shutil
+import json
+import numpy as np
+import mlflow
 
 
 def save_checkpoint(model, optimizer, filepath, epoch=None, val_loss=None):
@@ -52,7 +55,6 @@ def load_checkpoint(filepath, model, optimizer=None):
 
     return {k: v for k, v in checkpoint.items() if k not in ['model_state_dict', 'optimizer_state_dict']}
 
-import os
 
 def remove_hidden_files(directory):
     """
@@ -103,3 +105,54 @@ def flatten_directory(root_dir):
 
             os.rmdir(folder_path)
 
+
+def create_and_save_splits(filenames, splits_path, train_ratio=0.7, val_ratio=0.2, random_seed=42):
+    np.random.seed(random_seed)
+    indices = list(range(len(filenames)))
+    np.random.shuffle(indices)
+
+    num_train = int(len(indices) * train_ratio)
+    num_val = int(len(indices) * val_ratio)
+    train_indices = indices[:num_train]
+    val_indices = indices[num_train:num_train + num_val]
+    test_indices = indices[num_train + num_val:]
+
+    splits = {
+        "train": train_indices,
+        "val": val_indices,
+        "test": test_indices
+    }
+
+    with open(splits_path, 'w') as fp:
+        json.dump(splits, fp)
+    print(f"Splits saved to {splits_path}")
+
+def log_to_mlflow(config):
+    """
+    Logs relevant configuration parameters to MLflow.
+    
+    Parameters:
+        config (dict): Configuration dictionary containing experiment details.
+    """
+    # Log general experiment settings
+    mlflow.log_param("experiment_name", config['mlflow']['experiment_name'])
+    mlflow.log_param("model_name", config['model']['name'])
+    
+    # Log training parameters
+    mlflow.log_params({
+        "learning_rate": config['training']['learning_rate'],
+        "batch_size": config['training']['batch_size'],
+        "num_epochs": config['training']['num_epochs'],
+        "weight_decay": config['training'].get('weight_decay', 1e-5),
+        "scheduler_step": config['training']['scheduler_step'],
+        "scheduler_gamma": config['training']['scheduler_gamma'],
+        "patience": config['training'].get('patience', 5),
+    })
+    
+    # Log preprocessing parameters
+    mlflow.log_params({
+        "crop_dim": config['preprocessing']['crop_dim'],
+    })
+    
+    # Log paths
+    mlflow.log_param("checkpoint_path", config['paths']['checkpoint'])
