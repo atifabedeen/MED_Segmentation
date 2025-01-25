@@ -6,7 +6,15 @@ import shutil
 import json
 import numpy as np
 import mlflow
+import yaml
 
+class Config:
+    def __init__(self, config_path):
+        with open(config_path, 'r') as f:
+            self.config = yaml.safe_load(f)
+
+    def __getitem__(self, item):
+        return self.config[item]
 
 def save_checkpoint(model, optimizer, filepath, epoch=None, val_loss=None):
     """Saves model and optimizer state to a checkpoint file.

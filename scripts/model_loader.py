@@ -1,5 +1,5 @@
 from monai.networks.nets import UNet, UNETR, VNet
-import yaml
+from utils import Config
 
 def load_model_from_config(config_path):
     """Load and initialize a model based on the configuration file, with added dropout for MC Dropout.
@@ -10,9 +10,7 @@ def load_model_from_config(config_path):
     Returns:
         nn.Module: Initialized model.
     """
-    with open(config_path, 'r') as file:
-        config = yaml.safe_load(file)
-
+    config = Config("config/config.yaml")
     model_name = config['model']['name']
     in_channels = config['model']['in_channels']
     out_channels = config['model']['out_channels']

@@ -9,43 +9,32 @@ from monai.utils import set_determinism
 from monai.inferers import sliding_window_inference
 from monai.transforms import Compose
 from monai.data import decollate_batch
-from utils import save_checkpoint, log_to_mlflow
+from utils import save_checkpoint, log_to_mlflow, Config
 from model_loader import load_model_from_config
 from data_preprocessing import DatasetManager, Config
 import mlflow
-import yaml
 import os
-
 
 # Reproducibility
 set_determinism(seed=42)
 
-# Load configuration
 config = Config("config/config.yaml")
-
-# Initialize DatasetManager
 dataset_manager = DatasetManager(config)
 
-# Get DataLoaders for train, val, and test
 train_loader = dataset_manager.get_dataloader('train')
 val_loader = dataset_manager.get_dataloader('val')
 
-# Post-processing transforms
 post_pred = Compose([AsDiscrete(argmax=True, to_onehot=config['model']['out_channels'])])
 post_label = Compose([AsDiscrete(to_onehot=config['model']['out_channels'])])
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Load model
 model = torch.nn.DataParallel(load_model_from_config('config/config.yaml')).to(device)
 
-# Loss function
 criterion = DiceLoss(to_onehot_y=True, sigmoid=True)
 
-# Metrics
 dice_metric = DiceMetric(include_background=False, reduction="mean")
 
-# Optimizer and scheduler
 optimizer = optim.Adam(
     model.parameters(),
     lr=config['training']['learning_rate'],
@@ -88,16 +77,16 @@ def train(model, train_loader, val_loader, optimizer, criterion, scheduler, num_
             print(f"Epoch {epoch+1}, Train Loss: {avg_train_loss:.4f}")
             mlflow.log_metric('train_loss', avg_train_loss, step=epoch)
 
-            # Validation
             if (epoch + 1) % val_interval == 0:
                 avg_dice = validate(model, val_loader, dice_metric, device, config, epoch)
                 print(f"Validation Dice: {avg_dice:.4f}")
                 mlflow.log_metric('val_dice', avg_dice, step=epoch)
 
-                # Save best model
                 if avg_dice > best_metric:
                     best_metric = avg_dice
                     best_metric_epoch = epoch + 1
+                    config['paths']['checkpoint'] = os.path.join("checkpoints", f"best_model_{config['model']['name'].lower()}.pth")
+
                     save_checkpoint(model, optimizer, config['paths']['checkpoint'], epoch=epoch, val_loss=avg_dice)
                     print("Saved new best model checkpoint.")
 

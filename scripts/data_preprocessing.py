@@ -9,30 +9,20 @@ from monai.transforms import (
 )
 from monai.data import DataLoader, Dataset, pad_list_data_collate
 import yaml
-
-
-class Config:
-    def __init__(self, config_path):
-        with open(config_path, 'r') as f:
-            self.config = yaml.safe_load(f)
-
-    def __getitem__(self, item):
-        return self.config[item]
-
+import argparse
+from utils import Config
 
 def load_and_split_data(config, split_file="splits.json"):
     """
     Load dataset.json, split data into train, val, and test, and save to a split file.
     """
     if os.path.exists(split_file):
-        # Load existing splits
         with open(split_file, 'r') as f:
             splits = json.load(f)
             train_files = splits['train']
             val_files = splits['val']
             test_files = splits['test']
     else:
-        # Perform dataset splitting
         data_path = config['paths']['extracted_data']
         dataset_json_path = os.path.join(data_path, 'dataset.json')
 
@@ -50,7 +40,6 @@ def load_and_split_data(config, split_file="splits.json"):
         train_files, test_files = train_test_split(data_dicts, test_size=test_size, random_state=42, shuffle=True)
         train_files, val_files = train_test_split(train_files, test_size=val_size, random_state=42, shuffle=True)
 
-        # Save splits to file
         splits = {"train": train_files, "val": val_files, "test": test_files}
         with open(split_file, 'w') as f:
             json.dump(splits, f)
@@ -134,7 +123,6 @@ class DatasetManager:
     Manage dataset splitting and DataLoader creation for train, val, and test modes.
     """
     def __init__(self, config, split_file="splits.json"):
-        # Load splits from file or create them
         self.train_files, self.val_files, self.test_files = load_and_split_data(config, split_file=split_file)
         self.config = config
 
@@ -158,7 +146,6 @@ class DatasetManager:
         else:
             raise ValueError(f"Invalid mode: {mode}. Choose from 'train', 'val', or 'test'.")
 
-        # Create CacheDataset and DataLoader
         dataset = Dataset(data=data_files, transform=self.transforms)
         dataloader = DataLoader(
             dataset,
@@ -172,8 +159,6 @@ class DatasetManager:
 
 
 if __name__ == "__main__":
-    import argparse
-
     parser = argparse.ArgumentParser(description="3D MRI Dataset Preprocessing with MONAI")
     parser.add_argument('--config', type=str, required=True, help="Path to config.yaml")
     args = parser.parse_args()
@@ -181,12 +166,9 @@ if __name__ == "__main__":
     config = Config(args.config)
     dataset_manager = DatasetManager(config)
 
-    # Get DataLoaders for train, val, and test
     train_loader = dataset_manager.get_dataloader('train')
     val_loader = dataset_manager.get_dataloader('val')
     test_loader = dataset_manager.get_dataloader('test')
-    for data in val_loader:
-        print(f"image shape: {data['image'].shape}, label shape: {data['label'].shape}")
     print(f"Training dataset size: {len(train_loader.dataset)}")
     print(f"Validation dataset size: {len(val_loader.dataset)}")
     print(f"Test dataset size: {len(test_loader.dataset)}")

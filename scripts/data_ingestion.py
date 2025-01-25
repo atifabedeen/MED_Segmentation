@@ -3,14 +3,7 @@ import tarfile
 import gdown
 import yaml
 import nibabel as nib
-from utils import remove_hidden_files, flatten_directory
-
-
-
-def load_config():
-    """Load the configuration from config.yaml."""
-    with open("config/config.yaml", "r") as file:
-        return yaml.safe_load(file)
+from utils import remove_hidden_files, flatten_directory, Config
 
 
 def download_dataset(gdrive_link, output_path):
@@ -47,7 +40,7 @@ def process_3d_data(data_dir):
 
 def ingest_data():
     """Main function to ingest data."""
-    config = load_config()
+    config = Config("config/config.yaml")
 
     raw_data_dir = config["paths"]["raw_data"]
     extracted_data_dir = config["paths"]["extracted_data"]

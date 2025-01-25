@@ -13,7 +13,7 @@ from monai.data import decollate_batch
 from monai.metrics import DiceMetric, HausdorffDistanceMetric
 from data_preprocessing import DatasetManager, Config, get_transforms
 from model_loader import load_model_from_config
-from utils import load_checkpoint
+from utils import load_checkpoint, Config
 import yaml
 from matplotlib import pyplot as plt
 from sklearn.metrics import jaccard_score, precision_score, recall_score
@@ -104,8 +104,9 @@ def run_inference_with_mc_dropout(config, model, test_loader, transforms, device
             print(f"Image {idx}: Dice Score = {dice_score}, Hausdorff Distance = {hausdorff_distance}")
 
 if __name__ == "__main__":
-    with open('config/config.yaml', 'r') as file:
-        config = yaml.safe_load(file)
+
+    config = Config("config/config.yaml")
+
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

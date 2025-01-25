@@ -5,87 +5,78 @@ stages:
     deps:
     - path: config/config.yaml
       hash: md5
-      md5: eade42cda89ad8fb3d4a3871cb24eca0
-      size: 1076
+      md5: 3ad6da4f6cf4208fd2c2419fe0d081ea
+      size: 1513
     - path: scripts/data_ingestion.py
       hash: md5
-      md5: c5c619c67382e8e7406d7bc9cd7037bb
-      size: 2072
+      md5: c853dfc6d3b1e6ef7ef87cea9d796006
+      size: 2324
     outs:
     - path: data/raw
       hash: md5
-      md5: e49f8db52aae2f43966f767308f021e5.dir
-      size: 455721472
+      md5: 78003ffd993ec3afe0d09c078f269cb9.dir
+      size: 1610352640
       nfiles: 1
   preprocess:
     cmd: python scripts/data_preprocessing.py --config config/config.yaml
     deps:
     - path: config/config.yaml
       hash: md5
-      md5: eade42cda89ad8fb3d4a3871cb24eca0
-      size: 1076
-    - path: data/extracted/Task02_Heart/dataset.json
+      md5: 3ad6da4f6cf4208fd2c2419fe0d081ea
+      size: 1513
+    - path: data/extracted/dataset.json
       hash: md5
-      md5: 510bce37cff7829f70cec65f9ff16b10
-      size: 2059
-      isexec: true
+      md5: 91d67054fc006ad04e499e546255d0d8
+      size: 4140
     - path: scripts/data_preprocessing.py
       hash: md5
-      md5: 245455f25eb53770fe3c4cb5b7f5aad3
-      size: 7074
+      md5: 59be4892d80d3fd60719d37d7112a2fd
+      size: 6309
   train:
     cmd: python scripts/model_training.py
     deps:
     - path: config/config.yaml
       hash: md5
-      md5: eade42cda89ad8fb3d4a3871cb24eca0
-      size: 1076
+      md5: 3ad6da4f6cf4208fd2c2419fe0d081ea
+      size: 1513
     - path: scripts/data_preprocessing.py
       hash: md5
-      md5: 245455f25eb53770fe3c4cb5b7f5aad3
-      size: 7074
+      md5: 59be4892d80d3fd60719d37d7112a2fd
+      size: 6309
     - path: scripts/model_loader.py
       hash: md5
-      md5: f15bad74ce0132d5e77b0d8a0195228d
-      size: 1979
+      md5: b1768e89e0e66441ab828be5f42b069e
+      size: 2199
     - path: scripts/model_training.py
       hash: md5
-      md5: a26767d3bacd10912c63d9dbe878dc8b
-      size: 3463
+      md5: 1c569ff1c6c5fd84e346eecda7a5cbf3
+      size: 5041
     outs:
-    - path: checkpoints/best_model.pth
-      hash: md5
-      md5: 1edc7f0d62a8bd483448a19782adfc51
-      size: 57859125
     - path: mlruns
       hash: md5
-      md5: ff6801668c04446736973c08bde1f9d8.dir
-      size: 57860264
-      nfiles: 15
+      md5: 778b658ce368fca327b7521ed86ecc0f.dir
+      size: 1211
+      nfiles: 21
   evaluate:
     cmd: python scripts/model_evaluation.py
     deps:
-    - path: checkpoints/best_model.pth
-      hash: md5
-      md5: 1edc7f0d62a8bd483448a19782adfc51
-      size: 57859125
     - path: config/config.yaml
       hash: md5
-      md5: eade42cda89ad8fb3d4a3871cb24eca0
-      size: 1076
+      md5: 3ad6da4f6cf4208fd2c2419fe0d081ea
+      size: 1513
     - path: scripts/data_preprocessing.py
       hash: md5
-      md5: 245455f25eb53770fe3c4cb5b7f5aad3
-      size: 7074
+      md5: 59be4892d80d3fd60719d37d7112a2fd
+      size: 6309
     - path: scripts/model_evaluation.py
       hash: md5
-      md5: 75f9e42459d970f0d47a10352ab06cea
-      size: 2269
+      md5: 940f1a5e337b97e38cbf4c0ba271d3f4
+      size: 5557
     - path: scripts/model_loader.py
       hash: md5
-      md5: f15bad74ce0132d5e77b0d8a0195228d
-      size: 1979
+      md5: b1768e89e0e66441ab828be5f42b069e
+      size: 2199
     - path: scripts/utils.py
       hash: md5
-      md5: 2f6eeaccc90d84fbad0fbf49686cf69d
-      size: 1894
+      md5: f8223771f433f5f7bd54bb7fdea9a79d
+      size: 5662
