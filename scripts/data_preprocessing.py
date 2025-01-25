@@ -108,6 +108,7 @@ def get_transforms(config, mode='train'):
             Orientationd(keys=["image", "label"], axcodes="RAS"),
             Spacingd(keys=["image", "label"], pixdim=(1.5, 1.5, 2.0), mode=("bilinear", "nearest")),
         ]
+
     elif mode == "test":
         transforms = [
             LoadImaged(keys=["image", "label"]),

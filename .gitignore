@@ -6,3 +6,4 @@ data/*
 /results
 /notebooks
 /checkpoints
+/out

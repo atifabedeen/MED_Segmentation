@@ -94,7 +94,7 @@ def run_inference(config, model, test_loader, transforms, device):
     hausdorff_metric = HausdorffDistanceMetric(percentile=95, include_background=False)
     spacing_transform = Spacing(pixdim=(1.5, 1.5, 2.0), mode=("bilinear", "nearest"))
 
-    roi_size = config['validation'].get('roi_size', (160, 160, 160))
+    roi_size = config['validation'].get('roi_size', (96, 96, 96))
     sw_batch_size = config['validation'].get('sw_batch_size', 4)
     pred_loader = LoadImage()
     with torch.no_grad():

@@ -117,7 +117,7 @@ def validate(model, val_loader, dice_metric, device, config, epoch):
     """
     model.eval()
     dice_metric.reset()
-    roi_size = config['validation'].get('roi_size', (160, 160, 160))
+    roi_size = config['validation'].get('roi_size', (96, 96, 96))
     sw_batch_size = config['validation'].get('sw_batch_size', 4)
 
     with torch.no_grad():
