@@ -10,7 +10,7 @@ from monai.transforms import (
 from monai.data import DataLoader, Dataset, pad_list_data_collate
 import yaml
 import argparse
-from utils import Config
+from .utils import Config
 
 def load_and_split_data(config, split_file="splits.json"):
     """
@@ -102,6 +102,22 @@ def get_transforms(config, mode='train'):
         transforms = [
             LoadImaged(keys=["image", "label"]),
             EnsureChannelFirstd(keys=["image", "label"]),
+            Orientationd(keys=["image"], axcodes="RAS"),
+            Spacingd(keys=["image"], pixdim=(1.5, 1.5, 2.0), mode="bilinear"),
+            ScaleIntensityRanged(
+                keys=["image"],
+                a_min=-57,
+                a_max=164,
+                b_min=0.0,
+                b_max=1.0,
+                clip=True,
+            ),
+            CropForegroundd(keys=["image"], source_key="image"),
+        ]
+    elif mode == "infer":
+        transforms = [
+            LoadImaged(keys=["image"]),
+            EnsureChannelFirstd(keys=["image"]),
             Orientationd(keys=["image"], axcodes="RAS"),
             Spacingd(keys=["image"], pixdim=(1.5, 1.5, 2.0), mode="bilinear"),
             ScaleIntensityRanged(

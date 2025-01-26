@@ -14,16 +14,16 @@ parameters:
 
 training:
   learning_rate: 0.0001
-  batch_size: 2
-  num_epochs: 1
+  batch_size: 4
+  num_epochs: 500
   weight_decay: 0.0001
   scheduler_step: 10
   scheduler_gamma: 0.5
-  patience: 10
+  patience: 5
 
 validation:
   enable_validation: true
-  val_interval: 2
+  val_interval: 10
   roi_size: [96, 96, 96]
   sw_batch_size: 4
   batch_size: 1

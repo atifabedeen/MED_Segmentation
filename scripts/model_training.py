@@ -44,7 +44,7 @@ scheduler = StepLR(optimizer, step_size=config['training']['scheduler_step'], ga
 
 
 def train(model, train_loader, val_loader, optimizer, criterion, scheduler, num_epochs):
-    val_interval = config['training'].get('val_interval', 1)
+    val_interval = config['validation']['val_interval']
     best_metric = -1
     best_metric_epoch = -1
     patience = config['training'].get('patience', 5)

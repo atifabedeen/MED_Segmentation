@@ -154,7 +154,8 @@ def log_to_mlflow(config):
         "weight_decay": config['training'].get('weight_decay', 1e-5),
         "scheduler_step": config['training']['scheduler_step'],
         "scheduler_gamma": config['training']['scheduler_gamma'],
-        "patience": config['training'].get('patience', 5),
+        "patience": config['training']['patience'],
+        "val_interal": config['validation']['val_interval']
     })
     
     # Log preprocessing parameters

@@ -1,5 +1,5 @@
 from monai.networks.nets import UNet, UNETR, VNet
-from utils import Config
+from .utils import Config
 
 def load_model_from_config(config_path):
     """Load and initialize a model based on the configuration file, with added dropout for MC Dropout.

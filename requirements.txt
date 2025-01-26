@@ -14,3 +14,4 @@ dvc
 gdown
 nibabel
 monai
+streamlit
