@@ -49,8 +49,8 @@ def get_post_transforms(transforms):
 def run_inference(model, image, roi_size, transforms, post_transforms):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     image_tensor = torch.tensor(image, dtype=torch.float).unsqueeze(0).to(device).clone().detach()
-    print(f"Image tensor shape (before inference): {image_tensor.shape}")
-    print(f"ROI size: {roi_size}")
+    # print(f"Image tensor shape (before inference): {image_tensor.shape}")
+    # print(f"ROI size: {roi_size}")
 
     with torch.no_grad():
         predictions = sliding_window_inference(image_tensor, roi_size, 4, model)
@@ -104,7 +104,7 @@ def main():
         st.subheader("Slice Visualization")
 
         num_slices = processed_image.shape[-1]  
-        print(f"Number of slices: {num_slices}")  
+        #print(f"Number of slices: {num_slices}")  
         slice_idx = st.slider("Select Slice", 0, num_slices - 1, num_slices // 2)
 
         visualize_slices(processed_image, prediction, slice_idx)

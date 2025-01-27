@@ -17,7 +17,7 @@ import os
 
 # Reproducibility
 set_determinism(seed=42)
-CONFIG_FILE_PATH = "config/config.yaml"
+CONFIG_FILE_PATH = "config/config_VNET.yaml"
 config = Config(CONFIG_FILE_PATH)
 dataset_manager = DatasetManager(config)
 

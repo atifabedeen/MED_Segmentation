@@ -1,5 +1,5 @@
 from monai.networks.nets import UNet, UNETR, VNet
-from .utils import Config
+from scripts.utils import Config
 
 def load_model_from_config(config_path):
     """Load and initialize a model based on the configuration file, with added dropout for MC Dropout.
@@ -16,7 +16,7 @@ def load_model_from_config(config_path):
     out_channels = config['model']['out_channels']
     features = config['model'].get('features', None)
     strides = config['model'].get('strides', None)
-    dropout_rate = config['model'].get('dropout_rate', 0.2)  # Default dropout rate for all models
+    dropout_rate = config['model'].get('dropout_rate', 0.1) 
 
     if model_name == 'UNet3D':
         return UNet(
@@ -27,7 +27,7 @@ def load_model_from_config(config_path):
             strides=strides or [2] * (len(features) - 1),
             num_res_units=2,
             norm='batch',
-            dropout=dropout_rate  # Add dropout globally to UNet layers
+            dropout=dropout_rate 
         )
     elif model_name == 'UNETR':
         return UNETR(
@@ -40,7 +40,7 @@ def load_model_from_config(config_path):
             mlp_dim=config['model'].get('mlp_dim', 3072),
             num_heads=config['model'].get('num_heads', 12),
             norm_name=config['model'].get('norm_name', 'instance'),
-            dropout_rate=dropout_rate  # Apply dropout during attention layers
+            dropout_rate=dropout_rate  
         )
     elif model_name == 'VNet':
         return VNet(

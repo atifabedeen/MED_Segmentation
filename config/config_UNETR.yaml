@@ -15,7 +15,7 @@ parameters:
 training:
   learning_rate: 0.0001
   batch_size: 4
-  num_epochs: 500
+  num_epochs: 700
   weight_decay: 0.0001
   scheduler_step: 10
   scheduler_gamma: 0.5
@@ -52,10 +52,10 @@ output:
   checkpoint_format: "pth"
 
 mlflow:
-  experiment_name: Spleen Segmentation UNet-2
+  experiment_name: Spleen Segmentation UNETR-3
 
 model:
-  name: UNet3D-2
+  name: UNETR-3
   module: monai.networks.nets
   in_channels: 1
   out_channels: 2
@@ -64,6 +64,7 @@ model:
   dropout_rate_up: [0.1, 0.1]
   dropout_rate_down: 0.1
   dropout_rate: 0.0
+
 
 dataset:
   cache_rate: 0.8

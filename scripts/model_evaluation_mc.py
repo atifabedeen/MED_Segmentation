@@ -59,28 +59,23 @@ def run_inference_with_mc_dropout(config, model, test_loader, transforms, device
         for idx, batch_data in enumerate(test_loader):
             images = batch_data["image"].to(device)
             labels = batch_data["label"].to(device)
-            original_image = images[0, 0].cpu().numpy()  # Extract the 3D image volume
+            original_image = images[0, 0].cpu().numpy() 
 
-            # Perform MC Dropout Inference
-            enable_mc_dropout(model)  # Enable dropout layers in train mode
+            enable_mc_dropout(model)  
             mc_preds = torch.stack(
                 [sliding_window_inference(images, roi_size, sw_batch_size, model) for _ in range(mc_samples)]
             )
-            mc_mean = mc_preds.mean(dim=0)  # Mean prediction (final output)
-            mc_variance = mc_preds.var(dim=0)  # Variance (uncertainty estimate)
+            mc_mean = mc_preds.mean(dim=0)  
+            mc_variance = mc_preds.var(dim=0) 
 
-            # Apply post-processing
-            batch_data["pred"] = mc_mean  # Use the mean prediction as the final output
+            batch_data["pred"] = mc_mean
             batch_data = [post_transforms(i) for i in decollate_batch(batch_data)]
 
-            # Extract the prediction mask
             pred_mask, gt_mask = from_engine(["pred", "label"])(batch_data)
 
-            # Compute metrics
             dice_score = dice_metric(y_pred=pred_mask, y=gt_mask).item()
             hausdorff_distance = hausdorff_metric(y_pred=pred_mask, y=gt_mask).item()
 
-            # Log metrics
             metrics = {
                 "Image Index": idx,
                 "Dice Score": dice_score,
@@ -91,7 +86,6 @@ def run_inference_with_mc_dropout(config, model, test_loader, transforms, device
                     f.write(f"{key}: {value}\n")
                 f.write("\n")
 
-            # Visualize and save results
             pred_loader = LoadImage()
             original_image = pred_loader(pred_mask[0].meta["filename_or_obj"])
             plt.figure("check", (18, 6))

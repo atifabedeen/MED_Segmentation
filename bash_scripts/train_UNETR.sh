@@ -10,4 +10,4 @@ source /work/pi_pkatz_umass_edu/atif_experiments/segmentation/hss/bin/activate
 
 cd /work/pi_pkatz_umass_edu/atif_experiments/segmentation
 
-python -m scripts.model_training
+python -m scripts.training_UNETR

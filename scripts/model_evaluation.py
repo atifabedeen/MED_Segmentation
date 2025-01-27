@@ -12,9 +12,9 @@ from monai.transforms import (
 from monai.inferers import sliding_window_inference
 from monai.data import decollate_batch
 from monai.metrics import DiceMetric, HausdorffDistanceMetric
-from data_preprocessing import DatasetManager, Config, get_transforms
-from model_loader import load_model_from_config
-from utils import load_checkpoint, Config
+from scripts.data_preprocessing import DatasetManager, Config, get_transforms
+from scripts.model_loader import load_model_from_config
+from scripts.utils import load_checkpoint, Config
 import yaml
 from matplotlib import pyplot as plt
 from sklearn.metrics import jaccard_score, precision_score, recall_score
@@ -96,24 +96,30 @@ def run_inference(config, model, test_loader, transforms, device):
     with torch.no_grad():
         for idx, batch_data in enumerate(test_loader):
             images = batch_data["image"].to(device)
+            labels = batch_data["label"].to(device)
             original_image = images[0, 0].cpu().numpy()  
 
             batch_data["pred"] = sliding_window_inference(images, roi_size, sw_batch_size, model)
+            #val_outputs = sliding_window_inference(images, roi_size, sw_batch_size, model)
             batch_data = [post_transforms(i) for i in decollate_batch(batch_data)]
 
             pred_mask, gt_mask = from_engine(["pred", "label"])(batch_data)
+            gt_mask_tensor = torch.cat(gt_mask, dim=0)
+            pred_mask_tensor = torch.cat(pred_mask, dim=0)
             original_image = pred_loader(pred_mask[0].meta["filename_or_obj"])
             plt.figure("check", (18, 6))
-            plt.subplot(1, 2, 1)
-            plt.imshow(original_image[:, :, 20], cmap="gray")
-            plt.subplot(1, 2, 2)
-            plt.imshow(pred_mask[0].detach().cpu()[1, :, :, 20])
-            plt.savefig("TESTTTTT.png")
+            plt.subplot(1, 3, 1)
+            plt.imshow(images[0, 0, :, :, 20].cpu().numpy(), cmap="gray")
+            plt.subplot(1, 3, 2)
+            plt.imshow(labels[0, 0, :, :, 20].cpu().numpy())
+            plt.subplot(1, 3, 3)
+            plt.imshow(torch.argmax(pred_mask_tensor, dim=0).detach().cpu()[:, :, 20])
+            plt.savefig("Test.png")
 
             dice_score = dice_metric(y_pred=pred_mask, y=gt_mask).item()
             hausdorff_distance = hausdorff_metric(y_pred=pred_mask, y=gt_mask).item()
 
-            # # Resample to original spacing
+            # Resample to original spacing
             # pred_resampled = spacing_transform(pred_mask)
             # label_resampled = spacing_transform(gt_mask)
 
@@ -139,7 +145,7 @@ if __name__ == "__main__":
 
     model = load_model_from_config('config/config.yaml').to(device)
     model = torch.nn.DataParallel(model)
-    load_checkpoint(config['paths']['checkpoint'], model)
+    load_checkpoint(os.path.join("checkpoints", f"best_model_{config['model']['name'].lower()}.pth"), model)
     model.eval()
     dataset_manager = DatasetManager(config)
 

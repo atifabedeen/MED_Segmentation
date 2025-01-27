@@ -7,10 +7,10 @@ from monai.transforms import (
     CropForegroundd, RandCropByPosNegLabeld, AsDiscreted, SpatialPadd,
     Orientationd, Spacingd, Resize
 )
-from monai.data import DataLoader, Dataset, pad_list_data_collate
+from monai.data import DataLoader, Dataset, CacheDataset, pad_list_data_collate
 import yaml
 import argparse
-from .utils import Config
+from scripts.utils import Config
 
 def load_and_split_data(config, split_file="splits.json"):
     """
@@ -162,7 +162,8 @@ class DatasetManager:
         else:
             raise ValueError(f"Invalid mode: {mode}. Choose from 'train', 'val', or 'test'.")
 
-        dataset = Dataset(data=data_files, transform=self.transforms)
+        #dataset = Dataset(data=data_files, transform=self.transforms)
+        dataset = CacheDataset(data=data_files, transform=self.transforms, cache_rate=1.0)
         dataloader = DataLoader(
             dataset,
             batch_size=self.config['training']['batch_size'] if mode=="train" else self.config['validation']['batch_size'],
