@@ -1,11 +1,11 @@
 # MED_Segmentation
 
 ## Overview
-**MED_Segmentation** is a medical image segmentation pipeline designed for segmenting 3D volumetric data, particularly for Left Atrium segmentation from MRI images. The pipeline implements state-of-the-art deep learning models such as **UNETR** and **VNET**, and includes steps for data preprocessing, training, evaluation, and uncertainty quantification. 
+**MED_Segmentation** is a medical image segmentation pipeline designed for segmenting 3D volumetric data, particularly for Spleen segmentation from MRI images. The pipeline implements state-of-the-art deep learning models such as **UNET**, **VNET**, and **UNETR**, and includes steps for data preprocessing, training, evaluation, and uncertainty quantification. 
 
 Key features:
 - Data preprocessing with augmentations
-- Support for multiple model architectures (UNETR, VNET)
+- Support for multiple model architectures (UNET, VNET, UNETR)
 - Experiment tracking using MLFlow
 - Version control with DVC
 - Uncertainty quantification using methods like Monte Carlo Dropout
@@ -20,10 +20,8 @@ Key features:
 | `main.py` | Entry point for running the full pipeline. Sequentially executes all steps including data ingestion, preprocessing, training, and evaluation. |
 | `data_ingestion.py` | Handles data downloading, extraction, and organization. Reads from `config.yaml` for source and destination paths. |
 | `data_preprocessing.py` | Prepares data for training, including resizing, normalization, and augmentation based on parameters in `config.yaml`. |
-| `model_loader.py` | Defines and loads model architectures (e.g., UNETR, VNET). Provides a modular approach for model configuration. |
+| `model_loader.py` | Defines and loads model architectures (e.g., UNET, VNET, UNETR). Provides a modular approach for model configuration. |
 | `model_training.py` | General script for training models. Accepts model, dataset, and architecture parameters to initiate training. |
-| `training_UNETR.py` | Specialized script for training the UNETR architecture. |
-| `training_VNET.py` | Specialized script for training the VNET architecture. |
 | `model_evaluation_mc.py` | Evaluates trained models using metrics and implements Monte Carlo Dropout for uncertainty quantification. |
 | `utils.py` | Utility functions used across the pipeline for common tasks like file handling, logging, and metric calculations. |
 
@@ -82,21 +80,33 @@ python scripts/data_preprocessing.py
 ```
 
 ### 3. Train the Models
-#### Train UNETR:
+#### Train UNET:
 ```bash
-python scripts/training_UNETR.py
+python scripts/model_training.py --architecture UNET
 ```
 
 #### Train VNET:
 ```bash
-python scripts/training_VNET.py
+python scripts/model_training.py --architecture VNET
+```
+
+#### Train UNETR:
+```bash
+python scripts/model_training.py --architecture UNETR
 ```
 
 ### 4. Evaluate Models
-Evaluate the trained models and compute metrics such as Dice Score, Jaccard Index, etc.:
+Evaluate the trained models and compute metrics such as Dice Score, Hausdorff Distance, Jaccard Index, Precision, and Recall:
 ```bash
 python scripts/model_evaluation_mc.py
 ```
+
+Metrics computed during evaluation:
+- **Dice Score**: Measures the overlap between predicted and ground truth masks.
+- **Hausdorff Distance (95th Percentile)**: Quantifies the boundary agreement between predictions and ground truth.
+- **Jaccard Index**: Measures the similarity between prediction and ground truth masks.
+- **Precision**: Proportion of true positives among predicted positives.
+- **Recall**: Proportion of true positives among actual positives.
 
 ### 5. Run the Full Pipeline
 To run all the steps sequentially:
@@ -116,7 +126,7 @@ python main.py
 ---
 
 ## Uncertainty Quantification
-Monte Carlo Dropout is used to estimate uncertainty in predictions. The script `model_evaluation_mc.py` includes functionality for this analysis.
+Monte Carlo Dropout is used to estimate uncertainty in predictions. The script `model_evaluation_mc.py` includes functionality for this analysis. Uncertainty maps are saved as visualizations for further interpretation.
 
 ---
 
@@ -146,11 +156,11 @@ Monte Carlo Dropout is used to estimate uncertainty in predictions. The script `
 
 Run the UI:
 ```bash
-streamlit run ui.py
+streamlit run app.py
 ```
 
 ---
 
 ## Acknowledgments
-- Dataset: Left Atrium segmentation dataset from [Medical Segmentation Decathlon](http://medicaldecathlon.com).
+- Dataset: Spleen segmentation dataset from [Medical Segmentation Decathlon](http://medicaldecathlon.com).
 - Reference frameworks: PyTorch, MLFlow, and DVC.
