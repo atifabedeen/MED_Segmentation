@@ -70,41 +70,33 @@ pip install -r requirements.txt
 ### 1. Data Ingestion
 Download and organize the dataset. Run:
 ```bash
-python scripts/data_ingestion.py
+python -m scripts.data_ingestion
 ```
 
 ### 2. Data Preprocessing
 Preprocess the dataset by resizing, normalizing, and augmenting images:
 ```bash
-python scripts/data_preprocessing.py
+python -m scripts.data_preprocessing
 ```
 
 ### 3. Train the Models
-#### Train UNET:
 ```bash
-python scripts/model_training.py --architecture UNET
+python -m scripts.model_training
 ```
-
-#### Train VNET:
-```bash
-python scripts/model_training.py --architecture VNET
-```
-
-#### Train UNETR:
-```bash
-python scripts/model_training.py --architecture UNETR
-```
-
 ### 4. Evaluate Models
-Evaluate the trained models and compute metrics such as Dice Score, Hausdorff Distance, Jaccard Index, Precision, and Recall:
+Evaluate the trained models and compute metrics such as Dice Score, Hausdorff Distance, Precision, and Recall:
 ```bash
-python scripts/model_evaluation_mc.py
+python -m scripts.model_evaluation
+```
+### 5. Uncertainty Quantification
+Evaluate the model using Mote Carlo Dropout and visualize the uncertainty maps:
+```bash
+python -m scripts.model_evaluation_mc
 ```
 
 Metrics computed during evaluation:
 - **Dice Score**: Measures the overlap between predicted and ground truth masks.
 - **Hausdorff Distance (95th Percentile)**: Quantifies the boundary agreement between predictions and ground truth.
-- **Jaccard Index**: Measures the similarity between prediction and ground truth masks.
 - **Precision**: Proportion of true positives among predicted positives.
 - **Recall**: Proportion of true positives among actual positives.
 
