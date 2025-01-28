@@ -101,8 +101,8 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model_paths = {
         "VNET": ("config/config_VNET.yaml", "checkpoints/best_model_vnet-4.pth"),
-        "UNET": ("config/config.yaml", "checkpoints/best_model_unet3d-2.pth"),
-        "UNETR": ("config/config_UNETR.yaml", "checkpoints/best_model_unetr-4.pth"),
+        "UNET": ("config/config.yaml", "checkpoints/best_model_unet3d.pth"),
+        "UNETR": ("config/config_UNETR.yaml", "checkpoints/best_model_unetr.pth"),
     }
 
     model_selected = None

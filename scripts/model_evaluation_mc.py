@@ -129,8 +129,8 @@ def inference_mc_dropout(config, model, test_loader, transforms, device, mc_samp
 
             batch_folder = os.path.join(config['paths']['results'], f"visualizations/batch_{idx}")
             os.makedirs(batch_folder, exist_ok=True)
-
-            #save_visualizations(original_image, labels, pred_mask_tensor, batch_folder, step=10)
+            
+            save_visualizations(original_image, labels, pred_mask_tensor, batch_folder, step=10)
 
 
 
