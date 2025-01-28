@@ -152,7 +152,9 @@ Monte Carlo Dropout is used to estimate uncertainty in predictions. The script `
 ## UI for Visualization
 Built a user interface for model inference using Streamlit. Users can select between the three models, upload volumetric data (Nifti format) and visualize each slice of the volume with the segmentation overlayed on top of the input image. A slight warning: inferencing is a bit slow because I was having an issue with caching the inferneced data (it would get deleted when the page re-renders so it will take some time if you select a slice)
 
-![UI](images/UI.png)
+Please download the model weights from [this link](https://drive.google.com/drive/folders/155cLJLto8EIZunVQBtZb3bm0wxd30yF0?usp=drive_link) for the three models and store it in an appropriate directory. You will need to give the path to these three models in app.py
+
+![UI](images/UI_new.png)
 
 
 Run the UI:
