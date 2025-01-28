@@ -73,28 +73,28 @@ Helps setup the repository with any missing directories:
 python setup.py
 ```
 
-### 1. Data Ingestion
+### 2. Data Ingestion
 Download and organize the dataset. Run:
 ```bash
 python -m scripts.data_ingestion
 ```
 
-### 2. Data Preprocessing
+### 3. Data Preprocessing
 Preprocess the dataset by resizing, normalizing, and augmenting images:
 ```bash
 python -m scripts.data_preprocessing
 ```
 
-### 3. Train the Models
+### 4. Train the Models
 ```bash
 python -m scripts.model_training
 ```
-### 4. Evaluate Models
+### 5. Evaluate Models
 Evaluate the trained models and compute metrics such as Dice Score, Hausdorff Distance, Precision, and Recall:
 ```bash
 python -m scripts.model_evaluation
 ```
-### 5. Uncertainty Quantification
+### 6. Uncertainty Quantification
 Evaluate the model using Mote Carlo Dropout and visualize the uncertainty maps:
 ```bash
 python -m scripts.model_evaluation_mc
@@ -106,7 +106,7 @@ Metrics computed during evaluation:
 - **Precision**: Proportion of true positives among predicted positives.
 - **Recall**: Proportion of true positives among actual positives.
 
-### 5. Run the Full Pipeline
+### 7. Run the Full Pipeline
 To run all the steps sequentially:
 ```bash
 python main.py
