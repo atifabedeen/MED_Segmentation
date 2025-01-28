@@ -28,7 +28,7 @@ def extract_tar_file(tar_path, extract_to):
         print(f"Extracted data already exists at {extract_to}. Skipping extraction.")
 
 
-def process_3d_data(data_dir):
+def process_data(data_dir):
     """Process extracted 3D data files."""
     for root, dirs, files in os.walk(data_dir):
         for file in files:
@@ -59,7 +59,7 @@ def ingest_data():
         removed_files = remove_hidden_files(directory)
         print(f"Removed {removed_files} hidden files from {directory}.")
 
-    process_3d_data(extracted_data_dir)
+    process_data(extracted_data_dir)
 
 
 if __name__ == "__main__":

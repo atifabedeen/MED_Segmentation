@@ -20,7 +20,7 @@ from matplotlib import pyplot as plt
 from sklearn.metrics import jaccard_score, precision_score, recall_score
 from monai.handlers.utils import from_engine
 
-def compute_additional_metrics(preds, labels):
+def compute_metrics(preds, labels):
     """Computes IoU, Precision, Recall, and Specificity."""
     preds_flat = torch.cat(preds).flatten().cpu().numpy()  # Convert list to tensor, flatten, and convert to numpy
     labels_flat = torch.cat(labels).flatten().cpu().numpy()
@@ -107,11 +107,7 @@ def run_inference(config, model, test_loader, transforms, device):
             dice_score = dice_metric(y_pred=pred_mask, y=gt_mask).item()
             hausdorff_distance = hausdorff_metric(y_pred=pred_mask, y=gt_mask).item()
 
-            # Resample to original spacing
-            # pred_resampled = spacing_transform(pred_mask)
-            # label_resampled = spacing_transform(gt_mask)
-
-            iou, precision, recall, specificity = compute_additional_metrics(pred_mask, gt_mask)
+            iou, precision, recall, specificity = compute_metrics(pred_mask, gt_mask)
 
             dice_scores.append(dice_score)
             hausdorff_distances.append(hausdorff_distance)
