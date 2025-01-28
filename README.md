@@ -163,5 +163,6 @@ streamlit run app.py
 ---
 
 ## Acknowledgments
+- AI Usage: AI was used to generate documentation, debugging, and optimizing workflows.
 - MONAI [ML Workflow example](https://github.com/Project-MONAI/tutorials/tree/main) for Medical Segmentation Decathlon was used a reference. 
 - Dataset: Spleen segmentation dataset from [Medical Segmentation Decathlon](http://medicaldecathlon.com).
