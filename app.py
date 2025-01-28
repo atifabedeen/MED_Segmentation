@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import os
 
 
+
 def get_infer_transforms():
     return Compose([
         LoadImaged(keys=["image"]),
@@ -67,16 +68,16 @@ def load_and_cache_model(config_path, checkpoint_path, device):
     return model
 
 def visualize_slices_streamlit(image, predictions):
-    if "slice_idx" not in st.session_state:
-        st.session_state.slice_idx = 0
-
     depth = image.shape[2]
-    slice_idx = st.slider(
-        "Select Slice",
+
+    st.markdown(f"### Enter a slice number (0 to {depth - 1}):")
+    slice_idx = st.number_input(
+        "Slice Number",
         min_value=0,
         max_value=depth - 1,
-        value=st.session_state.slice_idx,
-        key="slice_slider",
+        value=st.session_state.get("slice_idx", 0),  
+        step=1,
+        key="slice_input",
     )
 
     st.session_state.slice_idx = slice_idx
@@ -95,6 +96,7 @@ def visualize_slices_streamlit(image, predictions):
 
     st.pyplot(fig)
     plt.close(fig)
+
 
 def main():
     st.title("3D MRI Segmentation Inference")
