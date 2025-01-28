@@ -150,7 +150,7 @@ Monte Carlo Dropout is used to estimate uncertainty in predictions. The script `
 ---
 
 ## UI for Visualization
-Built a user interface for model inference using Streamlit. Users can select between the three models, upload volumetric data (Nifti format) and visualize each slice of the volume with the segmentation overlayed on top of the input image.
+Built a user interface for model inference using Streamlit. Users can select between the three models, upload volumetric data (Nifti format) and visualize each slice of the volume with the segmentation overlayed on top of the input image. A slight warning: inferencing is a bit slow because I was having an issue with caching the inferneced data (it would get deleted when the page re-renders so it will take some time if you select a slice)
 
 ![UI](images/UI.png)
 
