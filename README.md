@@ -1,7 +1,7 @@
 # MED_Segmentation
 
 ## Overview
-**MED_Segmentation** is a medical image segmentation pipeline designed for segmenting 3D volumetric data, particularly for Spleen segmentation from MRI images. The pipeline implements state-of-the-art deep learning models such as **UNET**, **VNET**, and **UNETR**, and includes steps for data preprocessing, training, evaluation, and uncertainty quantification. 
+**MED_Segmentation** is a medical image segmentation pipeline designed for segmenting 3D volumetric data, particularly for Spleen segmentation from MRI images. The pipeline implements deep learning models such as **UNET**, **VNET**, and **UNETR**, and includes steps for data preprocessing, training, evaluation, and uncertainty quantification. 
 
 Key features:
 - Data preprocessing with augmentations

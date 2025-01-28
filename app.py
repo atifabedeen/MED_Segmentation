@@ -1,113 +1,165 @@
 import streamlit as st
 import torch
-import numpy as np
 import tempfile
-import matplotlib.pyplot as plt
 from monai.transforms import (
-    Compose, Invertd, AsDiscreted, SaveImaged
+    Compose, Invertd, AsDiscreted, LoadImaged, Spacingd,
+    EnsureChannelFirstd, ScaleIntensityRanged, CropForegroundd, Orientationd, LoadImage
 )
 from monai.inferers import sliding_window_inference
-from monai.data import decollate_batch
-from monai.metrics import DiceMetric
+from monai.data import DataLoader, Dataset, decollate_batch
 from monai.handlers.utils import from_engine
-from scripts.data_preprocessing import get_transforms, Config
+from scripts.data_preprocessing import Config
 from scripts.model_loader import load_model_from_config
 from scripts.utils import load_checkpoint
+import matplotlib.pyplot as plt
+import os
 
-@st.cache_resource
-def load_model_from_checkpoint(config_path):
-    config = Config(config_path)
-    model = load_model_from_config(config_path).to("cuda" if torch.cuda.is_available() else "cpu")
-    model = torch.nn.DataParallel(model)
-    load_checkpoint(config['paths']['checkpoint'], model)
-    model.eval()
-    return model, config
 
-def preprocess_image(file_path, config):
-    transforms = get_transforms(config, mode='infer')  
-    data = {"image": file_path}
-    transformed = transforms(data)
-    return transformed["image"]
-
-def get_post_transforms(transforms):
+def get_infer_transforms():
     return Compose([
-        Invertd(
-            keys="pred",
-            transform=transforms,
-            orig_keys="image",
-            meta_keys="pred_meta_dict",
-            orig_meta_keys="image_meta_dict",
-            meta_key_postfix="meta_dict",
-            nearest_interp=False,
-            to_tensor=True,
-            device="cpu",
+        LoadImaged(keys=["image"]),
+        EnsureChannelFirstd(keys=["image"]),
+        Orientationd(keys=["image"], axcodes="RAS"),
+        Spacingd(keys=["image"], pixdim=(1.5, 1.5, 2.0), mode="bilinear"),
+        ScaleIntensityRanged(
+            keys=["image"],
+            a_min=-57,
+            a_max=164,
+            b_min=0.0,
+            b_max=1.0,
+            clip=True,
         ),
-        AsDiscreted(keys="pred", argmax=True, to_onehot=2),
-        SaveImaged(keys="pred", meta_keys="pred_meta_dict", output_dir="./out", output_postfix="seg", resample=False),
+        CropForegroundd(keys=["image"], source_key="image"),
     ])
 
-def run_inference(model, image, roi_size, transforms, post_transforms):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    image_tensor = torch.tensor(image, dtype=torch.float).unsqueeze(0).to(device).clone().detach()
-    # print(f"Image tensor shape (before inference): {image_tensor.shape}")
-    # print(f"ROI size: {roi_size}")
+
+def create_dataloader(file_path, transforms):
+    data = [{"image": file_path}]
+    dataset = Dataset(data=data, transform=transforms)
+    dataloader = DataLoader(dataset, batch_size=1)
+    return dataloader
+
+
+def run_inference(model, dataloader, post_transforms, roi_size, device):
+    model.eval()
+    pred_loader = LoadImage()
 
     with torch.no_grad():
-        predictions = sliding_window_inference(image_tensor, roi_size, 4, model)
-    
-    batch_data = {"pred": predictions, "image": image_tensor}
-    batch_data = [post_transforms(i) for i in decollate_batch(batch_data)]
-    
-    final_prediction = batch_data[0]["pred"].argmax(dim=0).cpu().numpy()
-    return final_prediction
+        for batch_data in dataloader:
+            images = batch_data["image"].to(device)
+
+            predictions = sliding_window_inference(images, roi_size, 4, model)
+            batch_data["pred"] = predictions
+            batch_data = [post_transforms(i) for i in decollate_batch(batch_data)]
+
+            pred_mask = from_engine(["pred"])(batch_data)
+            pred_mask_tensor = torch.cat(pred_mask, dim=0)
+
+            original_images = pred_loader(pred_mask[0].meta["filename_or_obj"])
+    return pred_mask_tensor, original_images
 
 
-def visualize_slices(image, prediction, slice_idx):
-    image = image.squeeze()  
+def load_and_cache_model(config_path, checkpoint_path, device):
+    config = Config(config_path)
+    model = load_model_from_config(config_path).to(device)
+    model = torch.nn.DataParallel(model)
+    load_checkpoint(checkpoint_path, model)
+    return model
+
+def visualize_slices_streamlit(image, predictions):
+    if "slice_idx" not in st.session_state:
+        st.session_state.slice_idx = 0
+
+    depth = image.shape[2]
+    slice_idx = st.slider(
+        "Select Slice",
+        min_value=0,
+        max_value=depth - 1,
+        value=st.session_state.slice_idx,
+        key="slice_slider",
+    )
+
+    st.session_state.slice_idx = slice_idx
+
     fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-
     axes[0].imshow(image[:, :, slice_idx], cmap="gray")
-    axes[0].set_title("Input Image")
+    axes[0].set_title(f"Input Image (Slice {slice_idx})")
 
     axes[1].imshow(image[:, :, slice_idx], cmap="gray")
-    axes[1].imshow(prediction[:, :, slice_idx], cmap="jet", alpha=0.5)
-    axes[1].set_title("Segmentation Overlay")
+    axes[1].imshow(
+        torch.argmax(predictions, dim=0).detach().cpu()[:, :, slice_idx],
+        cmap="jet",
+        alpha=0.5,
+    )
+    axes[1].set_title(f"Prediction Overlay (Slice {slice_idx})")
 
     st.pyplot(fig)
-
+    plt.close(fig)
 
 def main():
     st.title("3D MRI Segmentation Inference")
-    
-    config_path = "config/config.yaml"  
-    st.sidebar.info(f"Using config file: {config_path}")
-    model, config = load_model_from_checkpoint(config_path)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model_paths = {
+        "VNET": ("config/config_VNET.yaml", "checkpoints/best_model_vnet-2.pth"),
+        "UNET": ("config/config.yaml", "checkpoints/best_model_unet3d-2.pth"),
+        "UNETR": ("config/config_UNETR.yaml", "checkpoints/best_model_unetr-2.pth"),
+    }
+
+    model_selected = None
+    for model_name in model_paths:
+        if st.button(f"Select {model_name}"):
+            model_selected = model_name
+
+    if model_selected:
+        config_path, checkpoint_path = model_paths[model_selected]
+        if "model" not in st.session_state or st.session_state.model_selected != model_selected:
+            st.text(f"Loading {model_selected} model...")
+            st.session_state.model = load_and_cache_model(config_path, checkpoint_path, device)
+            st.session_state.transforms = get_infer_transforms()
+            st.session_state.model_selected = model_selected
+            st.session_state.inference_done = False  # Reset inference flag
+
     uploaded_file = st.file_uploader("Upload a 3D MRI file (NIfTI format)", type=["nii", "nii.gz"])
-    if uploaded_file:
+    if uploaded_file and "model" in st.session_state:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".nii.gz") as temp_file:
             temp_file.write(uploaded_file.read())
-            temp_file_path = temp_file.name
+            file_path = temp_file.name
 
-        st.text("Applying preprocessing transforms...")
-        transforms = get_transforms(config, mode='infer')
-        processed_image = preprocess_image(temp_file_path, config)
-        processed_image = np.array(processed_image)  
-        st.text(f"Processed image shape: {processed_image.shape}")
+        if (
+            not st.session_state.get("inference_done", False)
+            or st.session_state.file_path != uploaded_file.name
+            or st.session_state.model_selected != model_selected
+        ):
+            st.text("Running inference...")
+            post_transforms = Compose([
+                Invertd(
+                    keys="pred",
+                    transform=st.session_state.transforms,
+                    orig_keys="image",
+                    meta_keys="pred_meta_dict",
+                    orig_meta_keys="image_meta_dict",
+                    meta_key_postfix="meta_dict",
+                    nearest_interp=False,
+                    to_tensor=True,
+                    device="cpu",
+                ),
+                AsDiscreted(keys="pred", argmax=True, to_onehot=2),
+            ])
+            roi_size = [96, 96, 96]
 
-        post_transforms = get_post_transforms(transforms)
+            dataloader = create_dataloader(file_path, st.session_state.transforms)
+            predictions, og_images = run_inference(
+                st.session_state.model, dataloader, post_transforms, roi_size, device
+            )
 
-        st.text("Running inference...")
-        roi_size = [96, 96, 96]
-        prediction = run_inference(model, processed_image, roi_size, transforms, post_transforms)
+            st.session_state.predictions = predictions
+            st.session_state.og_images = og_images
+            st.session_state.file_path = uploaded_file.name
+            st.session_state.inference_done = True
+
         st.success("Inference completed!")
 
-        st.subheader("Slice Visualization")
-
-        num_slices = processed_image.shape[-1]  
-        #print(f"Number of slices: {num_slices}")  
-        slice_idx = st.slider("Select Slice", 0, num_slices - 1, num_slices // 2)
-
-        visualize_slices(processed_image, prediction, slice_idx)
+        visualize_slices_streamlit(st.session_state.og_images, st.session_state.predictions)
 
 
 

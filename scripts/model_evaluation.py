@@ -20,26 +20,6 @@ from matplotlib import pyplot as plt
 from sklearn.metrics import jaccard_score, precision_score, recall_score
 from monai.handlers.utils import from_engine
 
-def visualize_segmentation(image, pred, save_path=None):
-    """Visualizes and optionally saves the overlay of the image and prediction."""
-    image_slice_idx = image.shape[2] // 2
-    pred_slice_idx = pred.shape[2] // 2
-
-    if pred.shape[0] > 1:
-        pred = pred.argmax(axis=0) 
-
-    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-
-    axes[0].imshow(image[:, :, image_slice_idx], cmap="gray")
-    axes[0].set_title("Image")
-
-    axes[1].imshow(pred[:, :, pred_slice_idx], cmap="jet", alpha=0.5)
-    axes[1].set_title("Prediction")
-
-    if save_path:
-        plt.savefig(save_path)
-    plt.show()
-
 def compute_additional_metrics(preds, labels):
     """Computes IoU, Precision, Recall, and Specificity."""
     preds_flat = torch.cat(preds).flatten().cpu().numpy()  # Convert list to tensor, flatten, and convert to numpy

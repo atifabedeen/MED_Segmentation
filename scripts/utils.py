@@ -7,6 +7,7 @@ import json
 import numpy as np
 import mlflow
 import yaml
+from matplotlib import pyplot as plt
 
 class Config:
     def __init__(self, config_path):
@@ -165,3 +166,34 @@ def log_to_mlflow(config):
     
     # Log paths
     mlflow.log_param("checkpoint_path", config['paths']['checkpoint'])
+
+
+def save_visualizations(original_image, labels, pred_mask_tensor, batch_folder, step=10):
+    """
+    Save visualizations of input images, ground truth labels, and predictions.
+
+    Args:
+        original_image (numpy.ndarray): Original input volume of shape [H, W, D].
+        labels (torch.Tensor): Ground truth tensor of shape [1, 1, H, W, D].
+        pred_mask_tensor (torch.Tensor): Predicted segmentation tensor of shape [C, H, W, D].
+        batch_folder (str): Path to the folder where visualizations should be saved.
+        step (int): Step size for slices (e.g., every 10th slice).
+    """
+    os.makedirs(batch_folder, exist_ok=True)
+    depth = original_image.shape[2]  # Get the depth (D) dimension of the volume
+
+    for slice_idx in range(0, depth, step):
+        plt.figure("check", (18, 6))
+        plt.subplot(1, 3, 1)
+        plt.imshow(original_image[:, :, slice_idx], cmap="gray")  # Use original image
+        plt.title("Input Image")
+        plt.subplot(1, 3, 2)
+        plt.imshow(labels[0, 0, :, :, slice_idx].cpu().numpy(), cmap="jet")
+        plt.title("Ground Truth")
+        plt.subplot(1, 3, 3)
+        plt.imshow(torch.argmax(pred_mask_tensor, dim=0).detach().cpu()[:, :, slice_idx], cmap="jet")
+        plt.title("Prediction")
+        save_path = os.path.join(batch_folder, f"slice_{slice_idx}.png")
+        plt.savefig(save_path)
+        plt.close()
+
