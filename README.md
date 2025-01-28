@@ -67,6 +67,12 @@ pip install -r requirements.txt
 
 ## Steps to Run the Pipeline
 
+### 1. Setup
+Helps setup the repository with any missing directories:
+```
+python setup.py
+```
+
 ### 1. Data Ingestion
 Download and organize the dataset. Run:
 ```bash
