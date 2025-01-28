@@ -42,7 +42,7 @@ def load_model_from_config(config_path):
             norm_name=config['model'].get('norm_name', 'instance'),
             dropout_rate=dropout_rate  
         )
-    elif model_name == 'VNet' or model_name == 'VNet-4':
+    elif model_name == 'VNET':
         return VNet(
             spatial_dims=3,
             in_channels=in_channels,
