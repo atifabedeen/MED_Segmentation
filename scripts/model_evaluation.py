@@ -73,6 +73,14 @@ def run_inference(config, model, test_loader, transforms, device):
     roi_size = config['validation'].get('roi_size', (96, 96, 96))
     sw_batch_size = config['validation'].get('sw_batch_size', 4)
     pred_loader = LoadImage()
+
+    dice_scores = []
+    hausdorff_distances = []
+    ious = []
+    precisions = []
+    recalls = []
+    specificities = []
+
     with torch.no_grad():
         for idx, batch_data in enumerate(test_loader):
             images = batch_data["image"].to(device)
@@ -105,6 +113,13 @@ def run_inference(config, model, test_loader, transforms, device):
 
             iou, precision, recall, specificity = compute_additional_metrics(pred_mask, gt_mask)
 
+            dice_scores.append(dice_score)
+            hausdorff_distances.append(hausdorff_distance)
+            ious.append(iou)
+            precisions.append(precision)
+            recalls.append(recall)
+            specificities.append(specificity)
+
             metrics = {
                 "Image Index": idx,
                 "Dice Score": dice_score,
@@ -116,8 +131,16 @@ def run_inference(config, model, test_loader, transforms, device):
             }
             log_metrics(metrics, log_file)
 
-            #visualize_segmentation(original_image, pred_tensor, save_path)
+            avg_metrics = {
+                "Average Dice Score": sum(dice_scores) / len(dice_scores),
+                "Average Hausdorff Distance": sum(hausdorff_distances) / len(hausdorff_distances),
+                "Average IoU": sum(ious) / len(ious),
+                "Average Precision": sum(precisions) / len(precisions),
+                "Average Recall": sum(recalls) / len(recalls),
+                "Average Specificity": sum(specificities) / len(specificities)
+            }
 
+            log_metrics(avg_metrics, log_file)
 
 if __name__ == "__main__":
     config = Config("config/config.yaml")

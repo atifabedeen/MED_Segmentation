@@ -17,6 +17,36 @@ from matplotlib import pyplot as plt
 from sklearn.metrics import jaccard_score, precision_score, recall_score
 from monai.handlers.utils import from_engine
 
+def visualize_uncertainty_map(image, mc_mean, mc_variance, slice_idx, save_path=None):
+    """
+    Visualize the original image, mean prediction (foreground channel), and uncertainty (variance, foreground channel).
+    Args:
+        image (torch.Tensor): Original image with shape (H, W, D).
+        mc_mean (torch.Tensor): Mean prediction from MC Dropout with shape (C, H, W, D).
+        mc_variance (torch.Tensor): Uncertainty map (variance) with shape (C, H, W, D).
+        slice_idx (int): Index for slicing 3D image.
+        save_path (str): Path to save the visualization.
+    """
+    # Select the foreground channel (index 1)
+    mc_mean_foreground = mc_mean[1, :, :, :].cpu().numpy()
+    mc_variance_foreground = mc_variance[1, :, :, :].cpu().numpy()
+
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+
+    axes[0].imshow(image[:, :, slice_idx], cmap="gray")
+    axes[0].set_title("Original Image")
+
+    axes[1].imshow(mc_mean_foreground[:, :, slice_idx], cmap="jet", alpha=0.7)
+    axes[1].set_title("Mean Prediction (Foreground)")
+
+    axes[2].imshow(mc_variance_foreground[:, :, slice_idx], cmap="viridis", alpha=0.7)
+    axes[2].set_title("Uncertainty (Variance, Foreground)")
+
+    if save_path:
+        plt.savefig(save_path)
+    plt.show()
+
+
 
 def enable_mc_dropout(model):
     """Enable MC Dropout by setting all dropout layers to train mode."""
@@ -57,7 +87,7 @@ def visualize_mc_segmentation(image, pred_mean, pred_var, save_path=None):
         plt.savefig(save_path)
     plt.show()
 
-def run_inference_with_mc_dropout(config, model, test_loader, transforms, device, mc_samples=20):
+def run_inference_with_mc_dropout(config, model, test_loader, transforms, device, mc_samples=10):
     """Runs inference with MC Dropout, computes metrics, and logs results."""
     os.makedirs(config['paths']['results'], exist_ok=True)
     log_file = os.path.join(config['paths']['results'], "metrics_log_mc.txt")
@@ -108,9 +138,16 @@ def run_inference_with_mc_dropout(config, model, test_loader, transforms, device
             gt_mask_tensor = torch.cat(gt_mask, dim=0)
             pred_mask_tensor = torch.cat(pred_mask, dim=0)
             original_image = pred_loader(pred_mask[0].meta["filename_or_obj"])
-
+            print(original_image.shape)
+            print(mc_mean.shape)
+            print(mc_variance.shape)
+            print(images.shape)
             dice_score = dice_metric(y_pred=pred_mask, y=gt_mask).item()
             hausdorff_distance = hausdorff_metric(y_pred=pred_mask, y=gt_mask).item()
+            slice_idx = mc_mean.shape[-1] // 2  # Middle slice
+            print(slice_idx)
+            save_path = os.path.join(config['paths']['results'], f"uncertainty_map_{idx}.png")
+            visualize_uncertainty_map(images[0, 0].cpu().numpy(), mc_mean[0], mc_variance[0], slice_idx, save_path)
 
             metrics = {
                 "Image Index": idx,
@@ -126,7 +163,7 @@ def run_inference_with_mc_dropout(config, model, test_loader, transforms, device
             batch_folder = os.path.join(config['paths']['results'], f"visualizations/batch_{idx}")
             os.makedirs(batch_folder, exist_ok=True)
 
-            save_visualizations(original_image, labels, pred_mask_tensor, batch_folder, step=10)
+            #save_visualizations(original_image, labels, pred_mask_tensor, batch_folder, step=10)
 
 
 

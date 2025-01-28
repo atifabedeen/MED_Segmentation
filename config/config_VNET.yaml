@@ -52,10 +52,10 @@ output:
   checkpoint_format: "pth"
 
 mlflow:
-  experiment_name: Spleen Segmentation VNet-2
+  experiment_name: Spleen Segmentation VNet-4
 
 model:
-  name: VNet-2
+  name: VNet-4
   module: monai.networks.nets
   in_channels: 1
   out_channels: 2
@@ -63,7 +63,7 @@ model:
   strides: [2, 2, 2, 2]
   dropout_rate_up: [0.1, 0.1]
   dropout_rate_down: 0.1
-  dropout_rate: 0.0
+  dropout_rate: 0.1
 
 
 dataset:

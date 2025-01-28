@@ -8,3 +8,4 @@ data/*
 /checkpoints
 /out
 slurm-*.out
+scripts/temp.py

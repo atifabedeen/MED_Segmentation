@@ -10,7 +10,7 @@ def load_model_from_config(config_path):
     Returns:
         nn.Module: Initialized model.
     """
-    config = Config("config/config.yaml")
+    config = Config(config_path)
     model_name = config['model']['name']
     in_channels = config['model']['in_channels']
     out_channels = config['model']['out_channels']
@@ -29,7 +29,7 @@ def load_model_from_config(config_path):
             norm='batch',
             dropout=dropout_rate 
         )
-    elif model_name == 'UNETR' or model_name == 'UNETR-2' or model_name == 'UNETR-3':
+    elif model_name == 'UNETR' or model_name == 'UNETR-2' or model_name == 'UNETR-4':
         return UNETR(
             spatial_dims=3,
             in_channels=in_channels,
@@ -42,7 +42,7 @@ def load_model_from_config(config_path):
             norm_name=config['model'].get('norm_name', 'instance'),
             dropout_rate=dropout_rate  
         )
-    elif model_name == 'VNet' or model_name == 'VNet-2' or model_name == 'VNet-3':
+    elif model_name == 'VNet' or model_name == 'VNet-2' or model_name == 'VNet-4':
         return VNet(
             spatial_dims=3,
             in_channels=in_channels,

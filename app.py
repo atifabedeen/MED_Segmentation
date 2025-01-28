@@ -100,9 +100,9 @@ def main():
     st.title("3D MRI Segmentation Inference")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model_paths = {
-        "VNET": ("config/config_VNET.yaml", "checkpoints/best_model_vnet-2.pth"),
+        "VNET": ("config/config_VNET.yaml", "checkpoints/best_model_vnet-4.pth"),
         "UNET": ("config/config.yaml", "checkpoints/best_model_unet3d-2.pth"),
-        "UNETR": ("config/config_UNETR.yaml", "checkpoints/best_model_unetr-2.pth"),
+        "UNETR": ("config/config_UNETR.yaml", "checkpoints/best_model_unetr-4.pth"),
     }
 
     model_selected = None
@@ -117,7 +117,7 @@ def main():
             st.session_state.model = load_and_cache_model(config_path, checkpoint_path, device)
             st.session_state.transforms = get_infer_transforms()
             st.session_state.model_selected = model_selected
-            st.session_state.inference_done = False  # Reset inference flag
+            st.session_state.inference_done = False
 
     uploaded_file = st.file_uploader("Upload a 3D MRI file (NIfTI format)", type=["nii", "nii.gz"])
     if uploaded_file and "model" in st.session_state:

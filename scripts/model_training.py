@@ -38,12 +38,12 @@ dice_metric = DiceMetric(include_background=False, reduction="mean")
 optimizer = optim.Adam(
     model.parameters(),
     lr=config['training']['learning_rate'],
-    #weight_decay=config['training'].get('weight_decay', 1e-5)
+    weight_decay=config['training'].get('weight_decay', 1e-5)
 )
-#scheduler = StepLR(optimizer, step_size=config['training']['scheduler_step'], gamma=config['training']['scheduler_gamma'])
+scheduler = StepLR(optimizer, step_size=config['training']['scheduler_step'], gamma=config['training']['scheduler_gamma'])
 
 
-def train(model, train_loader, val_loader, optimizer, criterion, num_epochs):
+def train(model, train_loader, val_loader, optimizer, criterion, scheduler, num_epochs):
     val_interval = config['validation']['val_interval']
     best_metric = -1
     best_metric_epoch = -1
@@ -71,7 +71,7 @@ def train(model, train_loader, val_loader, optimizer, criterion, num_epochs):
 
                 epoch_loss += loss.item()
 
-            #scheduler.step()
+            scheduler.step()
 
             avg_train_loss = epoch_loss / len(train_loader)
             print(f"Epoch {epoch+1}, Train Loss: {avg_train_loss:.4f}")
@@ -90,8 +90,8 @@ def train(model, train_loader, val_loader, optimizer, criterion, num_epochs):
                     save_checkpoint(model, optimizer, config['paths']['checkpoint'], epoch=epoch, val_loss=avg_dice)
                     print("Saved new best model checkpoint.")
                     patience_counter = 0
-                # else:
-                #     patience_counter += 1
+                else:
+                    patience_counter += 1
 
                 print(
                     f"Current Epoch: {epoch+1}, Best Metric: {best_metric:.4f} "
@@ -137,6 +137,6 @@ if __name__ == "__main__":
         val_loader,
         optimizer,
         criterion,
-        #scheduler,
+        scheduler,
         num_epochs=config['training']['num_epochs']
     )
