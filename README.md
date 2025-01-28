@@ -165,5 +165,5 @@ streamlit run app.py
 ---
 
 ## Acknowledgments
-- MONAI ML Workflow example for Medical Segmentation Decathlon was used a reference. 
+- MONAI [ML Workflow example](https://github.com/Project-MONAI/tutorials/tree/main) for Medical Segmentation Decathlon was used a reference. 
 - Dataset: Spleen segmentation dataset from [Medical Segmentation Decathlon](http://medicaldecathlon.com).
