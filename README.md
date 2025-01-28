@@ -152,7 +152,10 @@ Monte Carlo Dropout is used to estimate uncertainty in predictions. The script `
 ---
 
 ## UI for Visualization
-(Optional) Build a user interface for model inference using Streamlit or Gradio. Customize the UI to load an MRI image and display segmentation results.
+Built a user interface for model inference using Streamlit. Users can select between the three models, upload volumetric data (Nifti format) and visualize each slice of the volume with the segmentation overlayed on top of the input image.
+
+![UI](images/UI.png)
+
 
 Run the UI:
 ```bash
