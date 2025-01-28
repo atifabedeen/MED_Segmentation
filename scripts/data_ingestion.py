@@ -3,7 +3,7 @@ import tarfile
 import gdown
 import yaml
 import nibabel as nib
-from utils import remove_hidden_files, flatten_directory, Config
+from scripts.utils import remove_hidden_files, flatten_directory, Config
 
 
 def download_dataset(gdrive_link, output_path):
@@ -61,6 +61,9 @@ def ingest_data():
 
     process_data(extracted_data_dir)
 
+
+def main():
+    ingest_data()
 
 if __name__ == "__main__":
     ingest_data()

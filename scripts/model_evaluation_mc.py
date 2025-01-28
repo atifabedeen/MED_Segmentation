@@ -14,8 +14,9 @@ from scripts.data_preprocessing import DatasetManager, Config
 from scripts.model_loader import load_model_from_config
 from scripts.utils import load_checkpoint, save_visualizations
 from matplotlib import pyplot as plt
-from sklearn.metrics import jaccard_score, precision_score, recall_score
 from monai.handlers.utils import from_engine
+
+CONFIG_FILE_PATH = "config/config.yaml"
 
 def visualize_uncertainty_map(image, mc_mean, mc_variance, slice_idx, save_path=None):
     """
@@ -27,7 +28,6 @@ def visualize_uncertainty_map(image, mc_mean, mc_variance, slice_idx, save_path=
         slice_idx (int): Index for slicing 3D image.
         save_path (str): Path to save the visualization.
     """
-    # Select the foreground channel (index 1)
     mc_mean_foreground = mc_mean[1, :, :, :].cpu().numpy()
     mc_variance_foreground = mc_variance[1, :, :, :].cpu().numpy()
 
@@ -134,10 +134,8 @@ def inference_mc_dropout(config, model, test_loader, transforms, device, mc_samp
 
 
 
-
-
-if __name__ == "__main__":
-    config = Config("config/config.yaml")
+def main():
+    config = Config(CONFIG_FILE_PATH)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model = load_model_from_config('config/config.yaml').to(device)
@@ -150,3 +148,6 @@ if __name__ == "__main__":
     test_loader = dataset_manager.get_dataloader("test")
 
     inference_mc_dropout(config, model, test_loader, dataset_manager.transforms, device)
+
+if __name__ == "__main__":
+    main()

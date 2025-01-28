@@ -12,6 +12,8 @@ import yaml
 import argparse
 from scripts.utils import Config
 
+CONFIG_FILE_PATH = "config/config.yaml"
+
 def load_and_split_data(config, split_file="splits.json"):
     """
     Load dataset.json, split data into train, val, and test, and save to a split file.
@@ -174,13 +176,8 @@ class DatasetManager:
 
         return dataloader
 
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="3D MRI Dataset Preprocessing with MONAI")
-    parser.add_argument('--config', type=str, required=True, help="Path to config.yaml")
-    args = parser.parse_args()
-
-    config = Config(args.config)
+def main():
+    config = Config(CONFIG_FILE_PATH)
     dataset_manager = DatasetManager(config)
 
     train_loader = dataset_manager.get_dataloader('train')
@@ -189,3 +186,6 @@ if __name__ == "__main__":
     print(f"Training dataset size: {len(train_loader.dataset)}")
     print(f"Validation dataset size: {len(val_loader.dataset)}")
     print(f"Test dataset size: {len(test_loader.dataset)}")
+
+if __name__ == "__main__":
+    main()

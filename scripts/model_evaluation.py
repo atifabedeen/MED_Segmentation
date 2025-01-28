@@ -20,6 +20,8 @@ from matplotlib import pyplot as plt
 from sklearn.metrics import jaccard_score, precision_score, recall_score
 from monai.handlers.utils import from_engine
 
+CONFIG_FILE_PATH = "config/config.yaml"
+
 def compute_metrics(preds, labels):
     """Computes IoU, Precision, Recall, and Specificity."""
     preds_flat = torch.cat(preds).flatten().cpu().numpy()  # Convert list to tensor, flatten, and convert to numpy
@@ -138,8 +140,8 @@ def run_inference(config, model, test_loader, transforms, device):
 
             log_metrics(avg_metrics, log_file)
 
-if __name__ == "__main__":
-    config = Config("config/config.yaml")
+def main():
+    config = Config(CONFIG_FILE_PATH)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model = load_model_from_config('config/config.yaml').to(device)
@@ -151,3 +153,6 @@ if __name__ == "__main__":
     test_loader = dataset_manager.get_dataloader("test")
 
     run_inference(config, model, test_loader, dataset_manager.transforms, device)
+
+if __name__ == "__main__":
+    main()

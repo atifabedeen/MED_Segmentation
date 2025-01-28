@@ -129,8 +129,7 @@ def validate(model, val_loader, dice_metric, device, config, epoch):
         print(f"Validation Dice for Epoch {epoch+1}: {avg_dice:.4f}")
         return avg_dice
 
-
-if __name__ == "__main__":
+def main():
     train(
         model,
         train_loader,
@@ -140,3 +139,6 @@ if __name__ == "__main__":
         scheduler,
         num_epochs=config['training']['num_epochs']
     )
+
+if __name__ == "__main__":
+    main()

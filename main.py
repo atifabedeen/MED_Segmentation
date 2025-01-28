@@ -2,11 +2,8 @@ import logging
 from scripts import (
     data_ingestion,
     data_preprocessing,
-    model_loader,
     model_training,
-    training_UNETR,
-    training_VNET,
-    model_evaluation,
+    model_evaluation
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -14,16 +11,16 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 def main():
     logging.info("Starting the pipeline...")
 
-    logging.info("Running data_ingestion.py...")
+    logging.info("Running data ingestion...")
     data_ingestion.main()
 
-    logging.info("Running data_preprocessing.py...")
+    logging.info("Running data preprocessing...")
     data_preprocessing.main()
 
-    logging.info("Running training_UNETR.py...")
+    logging.info("Running model training...")
     model_training.main()
 
-    logging.info("Running model_evaluation_mc.py...")
+    logging.info("Running model evaluation...")
     model_evaluation.main()
 
     logging.info("Pipeline execution completed successfully.")
