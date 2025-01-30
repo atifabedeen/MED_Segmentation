@@ -105,10 +105,6 @@ def inference_mc_dropout(config, model, test_loader, transforms, device, mc_samp
             gt_mask_tensor = torch.cat(gt_mask, dim=0)
             pred_mask_tensor = torch.cat(pred_mask, dim=0)
             original_image = pred_loader(pred_mask[0].meta["filename_or_obj"])
-            print(original_image.shape)
-            print(mc_mean.shape)
-            print(mc_variance.shape)
-            print(images.shape)
             dice_score = dice_metric(y_pred=pred_mask, y=gt_mask).item()
             hausdorff_distance = hausdorff_metric(y_pred=pred_mask, y=gt_mask).item()
             slice_idx = mc_mean.shape[-1] // 2  
