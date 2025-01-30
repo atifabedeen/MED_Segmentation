@@ -108,7 +108,6 @@ def inference_mc_dropout(config, model, test_loader, transforms, device, mc_samp
             dice_score = dice_metric(y_pred=pred_mask, y=gt_mask).item()
             hausdorff_distance = hausdorff_metric(y_pred=pred_mask, y=gt_mask).item()
             slice_idx = mc_mean.shape[-1] // 2  
-            print(slice_idx)
             save_path = os.path.join(config['paths']['results'], f"uncertainty_map_{idx}.png")
             visualize_uncertainty_map(images[0, 0].cpu().numpy(), mc_mean[0], mc_variance[0], slice_idx, save_path)
 
